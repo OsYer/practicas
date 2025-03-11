@@ -7,6 +7,7 @@ namespace App {
         private UI_App(): void {
             let I_Cuadrado: N_Figuras.Cls_Cuadrado | null = null;
             let I_Rectangulo: N_Figuras.Cls_Rectangulo | null = null;
+            let I_Empleados: N_Empleados.Cls_Empleados | null = null;
 
             d3.select("body")
                 .append("h2")
@@ -43,7 +44,14 @@ namespace App {
             d3.select("body")
                 .append("button")
                 .text("Ejemplo de Uso de en Array")
-                .attr("class", "boton-estandar");
+                .attr("class", "boton-estandar")
+                .on("click", () => {
+                    if (!I_Empleados) {
+                        I_Empleados = new N_Empleados.Cls_Empleados();
+                    } else {
+                        d3.select("#ventana-empleados").style("display", "block");
+                    }
+                });
 
             d3.select("body")
                 .append("button")

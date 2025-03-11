@@ -7,6 +7,7 @@ var App;
         UI_App() {
             let I_Cuadrado = null;
             let I_Rectangulo = null;
+            let I_Empleados = null;
             d3.select("body")
                 .append("h2")
                 .text("Menú de Prácticas")
@@ -41,7 +42,15 @@ var App;
             d3.select("body")
                 .append("button")
                 .text("Ejemplo de Uso de en Array")
-                .attr("class", "boton-estandar");
+                .attr("class", "boton-estandar")
+                .on("click", () => {
+                if (!I_Empleados) {
+                    I_Empleados = new N_Empleados.Cls_Empleados();
+                }
+                else {
+                    d3.select("#ventana-empleados").style("display", "block");
+                }
+            });
             d3.select("body")
                 .append("button")
                 .text("Uso de post y get con API usuarios")
