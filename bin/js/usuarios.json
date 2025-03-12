@@ -1,0 +1,53 @@
+[
+    {
+      "id": 1,
+      "nombre": "Carlos",
+      "apellidoPaterno": "Gómez",
+      "apellidoMaterno": "López",
+      "edad": 28,
+      "correo": "carlos@example.com",
+      "estado": "Activo",
+      "fechaRegistro": "2024-03-01"
+    },
+    {
+      "id": 2,
+      "nombre": "Ana",
+      "apellidoPaterno": "Pérez",
+      "apellidoMaterno": "Martínez",
+      "edad": 32,
+      "correo": "ana@example.com",
+      "estado": "Inactivo",
+      "fechaRegistro": "2024-02-15"
+    },
+    {
+      "id": 3,
+      "nombre": "Luis",
+      "apellidoPaterno": "Rodríguez",
+      "apellidoMaterno": "Fernández",
+      "edad": 24,
+      "correo": "luis@example.com",
+      "estado": "Activo",
+      "fechaRegistro": "2024-01-10"
+    },
+    {
+      "id": 4,
+      "nombre": "María",
+      "apellidoPaterno": "Hernández",
+      "apellidoMaterno": "García",
+      "edad": 30,
+      "correo": "maria@example.com",
+      "estado": "Pendiente",
+      "fechaRegistro": "2024-03-02"
+    },
+    {
+      "id": 5,
+      "nombre": "Jorge",
+      "apellidoPaterno": "Díaz",
+      "apellidoMaterno": "Torres",
+      "edad": 35,
+      "correo": "jorge@example.com",
+      "estado": "Activo",
+      "fechaRegistro": "2024-02-20"
+    }
+  ]
+  

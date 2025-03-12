@@ -8,6 +8,8 @@ var App;
             let I_Cuadrado = null;
             let I_Rectangulo = null;
             let I_Empleados = null;
+            let I_Productos = null;
+            let I_Usuarios = null;
             d3.select("body")
                 .append("h2")
                 .text("Menú de Prácticas")
@@ -53,16 +55,28 @@ var App;
             });
             d3.select("body")
                 .append("button")
-                .text("Uso de post y get con API usuarios")
-                .attr("class", "boton-estandar");
-            d3.select("body")
-                .append("button")
                 .text("Gestión de productos con Map")
-                .attr("class", "boton-estandar");
+                .attr("class", "boton-estandar")
+                .on("click", () => {
+                if (!I_Productos) {
+                    I_Productos = new N_Productos.Cls_Productos();
+                }
+                else {
+                    d3.select("#ventana-productos").style("display", "block");
+                }
+            });
             d3.select("body")
                 .append("button")
                 .text("Usuarios")
-                .attr("class", "boton-estandar");
+                .attr("class", "boton-estandar")
+                .on("click", () => {
+                if (!I_Usuarios) {
+                    I_Usuarios = new N_Usuarios.Cls_Usuarios();
+                }
+                else {
+                    d3.select("#ventana-usuarios").style("display", "block");
+                }
+            });
             d3.select("body")
                 .style("display", "flex")
                 .style("flex-direction", "column")

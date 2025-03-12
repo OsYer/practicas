@@ -8,7 +8,8 @@ namespace App {
             let I_Cuadrado: N_Figuras.Cls_Cuadrado | null = null;
             let I_Rectangulo: N_Figuras.Cls_Rectangulo | null = null;
             let I_Empleados: N_Empleados.Cls_Empleados | null = null;
-
+            let I_Productos: N_Productos.Cls_Productos | null = null;
+            let I_Usuarios: N_Usuarios.Cls_Usuarios | null = null;
             d3.select("body")
                 .append("h2")
                 .text("Menú de Prácticas")
@@ -55,18 +56,27 @@ namespace App {
 
             d3.select("body")
                 .append("button")
-                .text("Uso de post y get con API usuarios")
-                .attr("class", "boton-estandar");
-
-            d3.select("body")
-                .append("button")
                 .text("Gestión de productos con Map")
-                .attr("class", "boton-estandar");
+                .attr("class", "boton-estandar")
+                .on("click", () => {
+                    if (!I_Productos) {
+                        I_Productos = new N_Productos.Cls_Productos();
+                    } else {
+                        d3.select("#ventana-productos").style("display", "block");
+                    }
+                });
 
             d3.select("body")
                 .append("button")
                 .text("Usuarios")
-                .attr("class", "boton-estandar");
+                .attr("class", "boton-estandar")
+                .on("click", () => {
+                    if (!I_Usuarios) {
+                        I_Usuarios = new N_Usuarios.Cls_Usuarios();
+                    } else {
+                        d3.select("#ventana-usuarios").style("display", "block");
+                    }
+                });
 
             d3.select("body")
                 .style("display", "flex")
