@@ -10,6 +10,7 @@ namespace App {
             let I_Empleados: N_Empleados.Cls_Empleados | null = null;
             let I_Productos: N_Productos.Cls_Productos | null = null;
             let I_Usuarios: N_Usuarios.Cls_Usuarios | null = null;
+            let I_Mascotas: N_Mascotas.Cls_Mascotas | null = null;
             d3.select("body")
                 .append("h2")
                 .text("Menú de Prácticas")
@@ -66,7 +67,7 @@ namespace App {
                     }
                 });
 
-            d3.select("body")
+                d3.select("body")
                 .append("button")
                 .text("Usuarios")
                 .attr("class", "boton-estandar")
@@ -75,6 +76,18 @@ namespace App {
                         I_Usuarios = new N_Usuarios.Cls_Usuarios();
                     } else {
                         d3.select("#ventana-usuarios").style("display", "block");
+                    }
+                });  
+                
+                d3.select("body")
+                .append("button")
+                .text("Backend")
+                .attr("class", "boton-estandar")
+                .on("click", () => {
+                    if (!I_Mascotas) {
+                        I_Mascotas = new N_Mascotas.Cls_Mascotas();
+                    } else {
+                        d3.select("#ventana-mascotas").style("display", "block");
                     }
                 });
 
