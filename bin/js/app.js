@@ -85,9 +85,9 @@ var App;
                 .on("click", () => {
                 if (!I_Mascotas) {
                     I_Mascotas = new N_Mascotas.Cls_Mascotas();
-                }
-                else {
-                    d3.select("#ventana-mascotas").style("display", "block");
+                    // } else {
+                    //     d3.select("#ventana-mascotas").style("display", "block");
+                    // }
                 }
             });
             d3.select("body")
