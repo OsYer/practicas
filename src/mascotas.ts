@@ -104,7 +104,7 @@ namespace N_Mascotas {
 
             acciones.append("button")
                 .text("Nuevo")
-                .style("background-color", "#6a11cb")
+                .style("background-color", "#28a745")
                 .style("color", "white")
                 .style("padding", "10px 20px")
                 .style("border", "none")
@@ -137,19 +137,312 @@ namespace N_Mascotas {
         }
 
         private editarMascota(mascota: any): void {
-            alert(`Editar mascota: ${mascota.Nombre}`);
-            // Lógica para editar la mascota aquí
+            // Crear modal contenedor
+            const modal = d3.select("body")
+                .append("div")
+                .attr("id", "modal-editar")
+                .style("position", "fixed")
+                .style("top", "0")
+                .style("left", "0")
+                .style("width", "100%")
+                .style("height", "100%")
+                .style("background-color", "rgba(0,0,0,0.6)")
+                .style("display", "flex")
+                .style("justify-content", "center")
+                .style("align-items", "center")
+                .style("z-index", "1000");
+        
+            const form = modal.append("div")
+                .style("background", "white")
+                .style("padding", "20px")
+                .style("border-radius", "10px")
+                .style("width", "400px")
+                .style("box-shadow", "0 0 10px rgba(0,0,0,0.3)");
+        
+            const campos = [
+                { nombre: "Nombre", tipo: "text" },
+                { nombre: "Edad", tipo: "number" },
+                { nombre: "Especie", tipo: "text" },
+                { nombre: "Raza", tipo: "text" },
+                { nombre: "Peso", tipo: "number", paso: "0.01" },
+                { nombre: "Sexo", tipo: "text" },
+                { nombre: "IdUsuario", tipo: "number" }
+            ];
+        
+            campos.forEach(campo => {
+                form.append("label").text(campo.nombre).style("display", "block").style("margin-top", "10px");
+                form.append("input")
+                    .attr("type", campo.tipo)
+                    .attr("name", campo.nombre)
+                    .attr("step", campo.paso || null)
+                    .property("value", mascota[campo.nombre]) // <- prellenado
+                    .style("width", "100%")
+                    .style("padding", "5px")
+                    .style("margin-top", "5px");
+            });
+        
+            form.append("button")
+                .text("Guardar cambios")
+                .style("margin-top", "20px")
+                .style("padding", "10px")
+                .style("background-color", "#007bff")
+                .style("color", "white")
+                .style("border", "none")
+                .style("border-radius", "5px")
+                .style("cursor", "pointer")
+                .on("click", async () => {
+                    const inputs: any = {};
+                    form.selectAll("input").each(function() {
+                        const input = d3.select(this);
+                        const nombre = input.attr("name");
+                        const valor = input.property("value");
+                        inputs[nombre] = nombre === "Edad" || nombre === "Peso" || nombre === "IdUsuario" ? Number(valor) : valor;
+                    });
+        
+                    const mascotaActualizada = {
+                        Id: mascota.Id, // IMPORTANTE
+                        Nombre: inputs.Nombre,
+                        Edad: inputs.Edad,
+                        Especie: inputs.Especie,
+                        Raza: inputs.Raza,
+                        Peso: inputs.Peso,
+                        Sexo: inputs.Sexo,
+                        IdUsuario: inputs.IdUsuario
+                    };
+        
+                    try {
+                        const respuesta = await fetch("http://localhost:50587/Mascotas.svc/actualizarmascota", {
+                            method: "PUT",
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({ mascota: mascotaActualizada })
+                        });
+        
+                        if (respuesta.ok) {
+                            alert("Mascota actualizada correctamente");
+                            this.CargarMascotas();
+                        } else {
+                            alert("Error al actualizar la mascota");
+                        }
+                    } catch (error) {
+                        console.error("Error al actualizar mascota:", error);
+                        alert("Error al actualizar mascota");
+                    }
+        
+                    modal.remove(); // cerrar modal
+                });
+        
+            form.append("button")
+                .text("Cancelar")
+                .style("margin-left", "10px")
+                .style("padding", "10px")
+                .style("background-color", "#6c757d")
+                .style("color", "white")
+                .style("border", "none")
+                .style("border-radius", "5px")
+                .style("cursor", "pointer")
+                .on("click", () => modal.remove());
         }
+        
 
         private eliminarMascota(mascota: any): void {
-            alert(`Eliminar mascota: ${mascota.Nombre}`);
-            // Lógica para eliminar la mascota aquí
+            // Crear fondo del modal
+            const overlay = d3.select("body")
+                .append("div")
+                .attr("id", "modal-confirmacion")
+                .style("position", "fixed")
+                .style("top", "0")
+                .style("left", "0")
+                .style("width", "100%")
+                .style("height", "100%")
+                .style("background-color", "rgba(0,0,0,0.6)")
+                .style("display", "flex")
+                .style("justify-content", "center")
+                .style("align-items", "center")
+                .style("z-index", "1000");
+        
+            // Contenedor del modal
+            const modal = overlay.append("div")
+                .style("background", "white")
+                .style("padding", "20px")
+                .style("border-radius", "10px")
+                .style("width", "350px")
+                .style("box-shadow", "0 0 15px rgba(0,0,0,0.3)")
+                .style("text-align", "center");
+        
+            modal.append("h3")
+                .text("¿Eliminar Mascota?")
+                .style("margin-bottom", "10px")
+                .style("color", "#dc3545");
+        
+            modal.append("p")
+                .text(`¿Estás seguro de que deseas eliminar a "${mascota.Nombre}"?`)
+                .style("margin-bottom", "20px")
+                .style("color", "#333");
+        
+            // Botones
+            const botones = modal.append("div").style("display", "flex").style("justify-content", "space-around");
+        
+            // Confirmar
+            botones.append("button")
+                .text("Sí, eliminar")
+                .style("background-color", "#dc3545")
+                .style("color", "white")
+                .style("padding", "10px 15px")
+                .style("border", "none")
+                .style("border-radius", "5px")
+                .style("cursor", "pointer")
+                .on("click", () => {
+                    fetch("http://localhost:50587/Mascotas.svc/eliminarmascota", {
+                        method: "DELETE",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ mascota: { Id: mascota.Id } })
+                    })
+                    .then(response => {
+                        if (!response.ok) throw new Error("Error al eliminar la mascota");
+                        return response.json();
+                    })
+                    .then(resultado => {
+                        if (resultado.EliminarMascotaResult === true) {
+                            alert("Mascota eliminada exitosamente");
+                            this.CargarMascotas();
+                        } else {
+                            alert("No se pudo eliminar la mascota");
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error al eliminar mascota:", error);
+                        alert("Hubo un error al eliminar la mascota");
+                    })
+                    overlay.remove(); // <- y también aquí
+                });
+        
+            // Cancelar
+            botones.append("button")
+                .text("Cancelar")
+                .style("background-color", "#6c757d")
+                .style("color", "white")
+                .style("padding", "10px 15px")
+                .style("border", "none")
+                .style("border-radius", "5px")
+                .style("cursor", "pointer")
+                .on("click", () => overlay.remove());
         }
+        
+        
 
         private agregarMascota(): void {
-            alert("Agregar nueva mascota");
-            // Lógica para agregar una nueva mascota aquí
+            // Crear modal contenedor
+            const modal = d3.select("body")
+                .append("div")
+                .attr("id", "modal-agregar")
+                .style("position", "fixed")
+                .style("top", "0")
+                .style("left", "0")
+                .style("width", "100%")
+                .style("height", "100%")
+                .style("background-color", "rgba(0,0,0,0.6)")
+                .style("display", "flex")
+                .style("justify-content", "center")
+                .style("align-items", "center")
+                .style("z-index", "1000");
+        
+            const form = modal.append("div")
+                .style("background", "white")
+                .style("padding", "20px")
+                .style("border-radius", "10px")
+                .style("width", "400px")
+                .style("box-shadow", "0 0 10px rgba(0,0,0,0.3)");
+        
+            const campos = [
+                { nombre: "Nombre", tipo: "text" },
+                { nombre: "Edad", tipo: "number" },
+                { nombre: "Especie", tipo: "text" },
+                { nombre: "Raza", tipo: "text" },
+                { nombre: "Peso", tipo: "number", paso: "0.01" },
+                { nombre: "Sexo", tipo: "text" },
+                { nombre: "IdUsuario", tipo: "number" }
+            ];
+        
+            campos.forEach(campo => {
+                form.append("label").text(campo.nombre).style("display", "block").style("margin-top", "10px");
+                form.append("input")
+                    .attr("type", campo.tipo)
+                    .attr("name", campo.nombre)
+                    .attr("step", campo.paso || null)
+                    .style("width", "100%")
+                    .style("padding", "5px")
+                    .style("margin-top", "5px");
+            });
+        
+            form.append("button")
+                .text("Guardar")
+                .style("margin-top", "20px")
+                .style("padding", "10px")
+                .style("background-color", "#28a745")
+                .style("color", "white")
+                .style("border", "none")
+                .style("border-radius", "5px")
+                .style("cursor", "pointer")
+                .on("click", async () => {
+                    const inputs: any = {};
+                    form.selectAll("input").each(function() {
+                        const input = d3.select(this);
+                        const nombre = input.attr("name");
+                        const valor = input.property("value");
+                        inputs[nombre] = nombre === "Edad" || nombre === "Peso" || nombre === "IdUsuario" ? Number(valor) : valor;
+                    });
+        
+                    const mascota = {
+                        Nombre: inputs.Nombre,
+                        Edad: inputs.Edad,
+                        Especie: inputs.Especie,
+                        Raza: inputs.Raza,
+                        Peso: inputs.Peso,
+                        Sexo: inputs.Sexo,
+                        IdUsuario: inputs.IdUsuario
+                    };
+        
+                    try {
+                        const respuesta = await fetch("http://localhost:50587/Mascotas.svc/agregarmascota", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({ mascota }) // ¡esto es importante para WCF!
+                        });
+        
+                        if (respuesta.ok) {
+                            alert("Mascota agregada correctamente");
+                            this.CargarMascotas(); // recargar la tabla
+                        } else {
+                            alert("Error al agregar mascota");
+                        }
+                    } catch (error) {
+                        console.error("Error al enviar mascota:", error);
+                        alert("Error al enviar mascota");
+                    }
+        
+                    modal.remove(); // cerrar modal
+                });
+        
+            // Botón cancelar
+            form.append("button")
+                .text("Cancelar")
+                .style("margin-left", "10px")
+                .style("padding", "10px")
+                .style("background-color", "#dc3545")
+                .style("color", "white")
+                .style("border", "none")
+                .style("border-radius", "5px")
+                .style("cursor", "pointer")
+                .on("click", () => modal.remove());
         }
+        
+        
     }
 }
 
