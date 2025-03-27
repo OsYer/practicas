@@ -10,7 +10,6 @@ var App;
             let I_Empleados = null;
             let I_Productos = null;
             let I_Usuarios = null;
-            let I_Mascotas = null;
             d3.select("body")
                 .append("h2")
                 .text("Menú de Prácticas")
@@ -76,18 +75,6 @@ var App;
                 }
                 else {
                     d3.select("#ventana-usuarios").style("display", "block");
-                }
-            });
-            d3.select("body")
-                .append("button")
-                .text("Backend")
-                .attr("class", "boton-estandar")
-                .on("click", () => {
-                if (!I_Mascotas) {
-                    I_Mascotas = new N_Mascotas.Cls_Mascotas();
-                    // } else {
-                    //     d3.select("#ventana-mascotas").style("display", "block");
-                    // }
                 }
             });
             d3.select("body")

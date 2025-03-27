@@ -1,147 +1,156 @@
 namespace N_Mascotas {
-    export interface Mascota {
-        id: number;
-        nombre: string;
-        especie: string;
-        raza: string;
-        edad: number;
-        peso: number;
-        sexo: string;
-        id_usuario: number;
-    }
-
     export class Cls_Mascotas {
-        private mascotas: Map<number, Mascota>;
-
-        // Definición de los inputs como propiedades de la clase
-        private inputId: d3.Selection<HTMLInputElement, unknown, HTMLElement, any>;
-        private inputNombre: d3.Selection<HTMLInputElement, unknown, HTMLElement, any>;
-        private inputEspecie: d3.Selection<HTMLInputElement, unknown, HTMLElement, any>;
-        private inputRaza: d3.Selection<HTMLInputElement, unknown, HTMLElement, any>;
-        private inputEdad: d3.Selection<HTMLInputElement, unknown, HTMLElement, any>;
-        private inputPeso: d3.Selection<HTMLInputElement, unknown, HTMLElement, any>;
-        private inputSexo: d3.Selection<HTMLInputElement, unknown, HTMLElement, any>;
-        private inputIdUsuario: d3.Selection<HTMLInputElement, unknown, HTMLElement, any>;
+        private tabla: d3.Selection<HTMLTableElement, unknown, HTMLElement, any>;
+        private tablaCuerpo: d3.Selection<HTMLTableSectionElement, unknown, HTMLElement, any>;
 
         constructor() {
-            this.mascotas = new Map();
-            
-            // Inicialización de los campos de entrada
-            this.iniciarFormulario();  // Iniciar formulario de entrada
+            this.UI_CrearTabla();
+            this.CargarMascotas();
         }
 
-        // Método para iniciar el formulario
-        private iniciarFormulario(): void {
-            // Crear el formulario para agregar una mascota
-            d3.select("body")
+        private async CargarMascotas(): Promise<void> {
+            try {
+                const respuesta = await fetch("http://localhost:50587/Mascotas.svc/obtenermascotas", {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json" 
+                    },
+                });
+        
+                if (!respuesta.ok) {
+                    throw new Error('Error al obtener las mascotas, código: ' + respuesta.status);
+                }
+        
+                const data = await respuesta.json();
+        
+                this.actualizarTabla(data.ObtenerMascotasResult);
+            } catch (error) {
+                console.error('Error al cargar las mascotas:', error);
+                // alert('Hubo un problema al cargar las mascotas.');
+            }
+        }
+        
+
+        private actualizarTabla(mascotas: any[]): void {
+            // Limpiar la tabla actual
+            this.tablaCuerpo.selectAll("*").remove();
+
+            // Agregar las filas de las mascotas
+            const filas = this.tablaCuerpo.selectAll("tr")
+                .data(mascotas)
+                .enter()
+                .append("tr");
+
+            filas.append("td").text(d => d.Nombre);
+            filas.append("td").text(d => d.Edad);
+            filas.append("td").text(d => d.Especie);
+            filas.append("td").text(d => d.Raza);
+            filas.append("td").text(d => d.Peso);
+            filas.append("td").text(d => d.Sexo);
+            filas.append("td").text(d => this.formatearFecha(d.FechaRegistro));
+            filas.append("td").append("button")
+                .text("Editar")
+                .style("background-color", "#f0ad4e")
+                .style("color", "white")
+                .style("padding", "5px 10px")
+                .style("border", "none")
+                .style("border-radius", "5px")
+                .style("cursor", "pointer")
+                .on("click", (event, d) => this.editarMascota(d));
+
+            filas.append("td").append("button")
+                .text("Eliminar")
+                .style("background-color", "#d9534f")
+                .style("color", "white")
+                .style("padding", "5px 10px")
+                .style("border", "none")
+                .style("border-radius", "5px")
+                .style("cursor", "pointer")
+                .on("click", (event, d) => this.eliminarMascota(d));
+        }
+
+        private formatearFecha(fecha: string): string {
+            const timestamp = parseInt(fecha.replace("/Date(", "").replace(")/", ""));
+            const date = new Date(timestamp);
+            return date.toLocaleDateString("es-ES");
+        }
+
+        private UI_CrearTabla(): void {
+            // Crear contenedor principal
+            const contenedor = d3.select("body")
                 .append("div")
-                .attr("id", "ventana-mascotas")
-                .style("display", "block")
-                .style("margin-top", "20px")
+                .attr("class", "tabla-container")
+                .style("max-width", "1200px")
+                .style("margin", "50px auto")
+                .style("background", "white")
                 .style("padding", "20px")
-                .style("border", "2px solid #ccc")
-                .style("background-color", "#f9f9f9")
-                .style("border-radius", "8px")
-                .append("h3")
-                .text("Formulario para agregar una mascota");
+                .style("border-radius", "10px")
+                .style("box-shadow", "0 4px 8px rgba(0, 0, 0, 0.1)");
 
-            d3.select("#ventana-mascotas")
-                .append("form")
-                .attr("id", "form-mascota")
-                .html(`
-                    <label>ID: <input type="number" id="input-id"></label><br>
-                    <label>Nombre: <input type="text" id="input-nombre"></label><br>
-                    <label>Especie: <input type="text" id="input-especie"></label><br>
-                    <label>Raza: <input type="text" id="input-raza"></label><br>
-                    <label>Edad: <input type="number" id="input-edad"></label><br>
-                    <label>Peso: <input type="number" step="0.1" id="input-peso"></label><br>
-                    <label>Sexo: <input type="text" id="input-sexo"></label><br>
-                    <label>ID Usuario: <input type="number" id="input-id-usuario"></label><br>
-                    <button type="button" id="btn-agregar">Agregar Mascota</button>
-                `);
+            // Agregar el encabezado con las acciones
+            const encabezado = contenedor.append("div")
+                .attr("class", "header")
+                .style("display", "flex")
+                .style("justify-content", "space-between")
+                .style("align-items", "center");
 
-            // Inicializar los campos de entrada
-            this.inputId = d3.select('#input-id');
-            this.inputNombre = d3.select('#input-nombre');
-            this.inputEspecie = d3.select('#input-especie');
-            this.inputRaza = d3.select('#input-raza');
-            this.inputEdad = d3.select('#input-edad');
-            this.inputPeso = d3.select('#input-peso');
-            this.inputSexo = d3.select('#input-sexo');
-            this.inputIdUsuario = d3.select('#input-id-usuario');
+            encabezado.append("h2")
+                .text("Lista de Mascotas")
+                .style("font-size", "20px")
+                .style("color", "#333");
 
-            // Agregar el evento al botón de agregar mascota
-            d3.select('#btn-agregar').on('click', () => this.agregarMascota());
+            const acciones = encabezado.append("div")
+                .attr("class", "acciones");
+
+            acciones.append("button")
+                .text("Nuevo")
+                .style("background-color", "#6a11cb")
+                .style("color", "white")
+                .style("padding", "10px 20px")
+                .style("border", "none")
+                .style("border-radius", "5px")
+                .style("cursor", "pointer")
+                .on("click", () => this.agregarMascota());
+
+            // Crear la tabla
+            this.tabla = contenedor.append("table")
+                .attr("class", "billing-table")
+                .style("width", "100%")
+                .style("border-collapse", "collapse")
+                .style("margin-top", "20px");
+
+            // Crear encabezados de la tabla
+            const thead = this.tabla.append("thead");
+            const encabezadoFila = thead.append("tr");
+
+            encabezadoFila.append("th").text("Nombre");
+            encabezadoFila.append("th").text("Edad");
+            encabezadoFila.append("th").text("Especie");
+            encabezadoFila.append("th").text("Raza");
+            encabezadoFila.append("th").text("Peso");
+            encabezadoFila.append("th").text("Sexo");
+            encabezadoFila.append("th").text("Fecha Registro");
+            encabezadoFila.append("th").text("Acciones");
+
+            // Crear el cuerpo de la tabla
+            this.tablaCuerpo = this.tabla.append("tbody");
         }
 
-        // Método para agregar una nueva mascota
-        public agregarMascota(): void {
-            const id = parseInt(this.inputId.property('value'));
-            const nombre = this.inputNombre.property('value');
-            const especie = this.inputEspecie.property('value');
-            const raza = this.inputRaza.property('value');
-            const edad = parseInt(this.inputEdad.property('value'));
-            const peso = parseFloat(this.inputPeso.property('value'));
-            const sexo = this.inputSexo.property('value');
-            const idUsuario = parseInt(this.inputIdUsuario.property('value'));
-
-            // Crear un objeto Mascota
-            const nuevaMascota: Mascota = {
-                id: id,
-                nombre: nombre,
-                especie: especie,
-                raza: raza,
-                edad: edad,
-                peso: peso,
-                sexo: sexo,
-                id_usuario: idUsuario
-            };
-
-            // Llamar al backend para insertar la mascota
-            this.insertarMascotaEnBackend(nuevaMascota);
-
-            // Limpiar los campos de entrada después de agregar
-            this.limpiarCampos();
-
-            console.log('Mascota agregada:', nuevaMascota);
+        private editarMascota(mascota: any): void {
+            alert(`Editar mascota: ${mascota.Nombre}`);
+            // Lógica para editar la mascota aquí
         }
 
-        // Método para insertar la mascota en el backend (servicio WCF)
-        private insertarMascotaEnBackend(mascota: Mascota): void {
-            // Enviar una solicitud POST a la API WCF para insertar la mascota en la base de datos
-            fetch('http://localhost:63221/Mascotas.svc/mascota', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(mascota) // Convertimos el objeto mascota en JSON
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Respuesta del servidor:', data);
-            })
-            .catch(error => {
-                console.error('Error al insertar la mascota:', error);
-            });
+        private eliminarMascota(mascota: any): void {
+            alert(`Eliminar mascota: ${mascota.Nombre}`);
+            // Lógica para eliminar la mascota aquí
         }
 
-        // Método para limpiar los campos de entrada
-        private limpiarCampos(): void {
-            this.inputId.property('value', '');
-            this.inputNombre.property('value', '');
-            this.inputEspecie.property('value', '');
-            this.inputRaza.property('value', '');
-            this.inputEdad.property('value', '');
-            this.inputPeso.property('value', '');
-            this.inputSexo.property('value', '');
-            this.inputIdUsuario.property('value', '');
-        }
-
-        // Método para mostrar las mascotas
-        public mostrarMascotas(): void {
-            this.mascotas.forEach((mascota) => {
-                console.log(mascota);
-            });
+        private agregarMascota(): void {
+            alert("Agregar nueva mascota");
+            // Lógica para agregar una nueva mascota aquí
         }
     }
 }
+
+let I_Mascotas = new N_Mascotas.Cls_Mascotas();
