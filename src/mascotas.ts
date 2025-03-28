@@ -174,11 +174,34 @@ namespace N_Mascotas {
         }
 
         private editarMascota(mascota: Mascota): void {
-            N_Mascotas.editarMascota(mascota, (actualizada: Mascota) => {
-                this.mascotas.set(actualizada.Id, actualizada);
-                this.actualizarTabla();
+            N_Mascotas.editarMascota(mascota, async (actualizada: Mascota) => {
+                try {
+                    const response = await fetch("http://localhost:50587/Mascotas.svc/actualizarmascota", {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ mascota: actualizada }) // 👈 Envoltorio obligatorio para WCF
+                    });
+        
+                    if (!response.ok) {
+                        throw new Error(`Error HTTP: ${response.status}`);
+                    }
+        
+                    const result = await response.json();
+                    if (result.ActualizarMascotaResult === true) {
+                        await this.CargarMascotas(); // recarga con los datos más actualizados
+                    } else {
+                        alert("No se pudo actualizar la mascota.");
+                    }
+        
+                } catch (error) {
+                    console.error("Error al actualizar mascota:", error);
+                    alert("Ocurrió un error al actualizar la mascota.");
+                }
             });
         }
+        
         
 
         private eliminarMascota(mascota: Mascota): void {
@@ -189,10 +212,33 @@ namespace N_Mascotas {
         }
 
         private agregarMascota(): void {
-            N_Mascotas.agregarMascota((nueva: Mascota) => {
-                // Aquí puedes hacer la lógica para agregar al Map y actualizar la tabla
-                this.mascotas.set(Date.now(), nueva); // Usa un ID temporal o backend luego lo asigna
-                this.actualizarTabla();
+            N_Mascotas.agregarMascota(async (nueva: Mascota) => {
+                try {
+                    const response = await fetch("http://localhost:50587/Mascotas.svc/agregarmascota", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ mascota: nueva }) // 👈 esta es la clave
+                    });
+        
+                    if (!response.ok) {
+                        throw new Error(`Error HTTP: ${response.status}`);
+                    }
+        
+                    const ok = await response.json();
+        
+                    if (ok.AgregarMascotaResult === true) {
+                        // puedes refrescar la lista o hacer un push local
+                        await this.CargarMascotas(); // mejor para tener el ID real
+                    } else {
+                        alert("No se pudo guardar la mascota.");
+                    }
+        
+                } catch (error) {
+                    console.error("Error al registrar mascota:", error);
+                    alert("Hubo un error al registrar la mascota.");
+                }
             });
         }
         
