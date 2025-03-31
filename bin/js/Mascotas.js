@@ -13,13 +13,14 @@ var N_Mascotas;
         constructor() {
             this.formatoFecha = d3.timeFormat("%d/%m/%Y %I:%M %p");
             this.mascotas = new Map();
+            this.url = "http://192.168.15.225:8080/Mascotas.svc";
             this.UI_CrearTabla();
             this.CargarMascotas();
         }
         CargarMascotas() {
             return __awaiter(this, void 0, void 0, function* () {
                 try {
-                    const respuesta = yield fetch("http://localhost:50587/Mascotas.svc/obtenermascotas", {
+                    const respuesta = yield fetch(`${this.url}/obtenermascotas`, {
                         method: "GET",
                         headers: { "Content-Type": "application/json" }
                     });
@@ -50,7 +51,7 @@ var N_Mascotas;
             filas.append("td").text(d => d.Especie);
             filas.append("td").text(d => d.Raza);
             filas.append("td").text(d => d.Peso);
-            filas.append("td").text(d => d.Sexo);
+            filas.append("td").text(d => d.Sexo === "H" ? "Hembra" : d.Sexo === "M" ? "Macho" : d.Sexo);
             filas.append("td").text(d => this.formatearFecha(d.FechaRegistro));
             filas.append("td").append("button")
                 .text("Editar")
@@ -120,7 +121,7 @@ var N_Mascotas;
                 .style("border", "1px solid #ccc")
                 .style("border-radius", "5px")
                 .style("width", "200px");
-            this.inputBusqueda.on("input", () => this.filtrarMascotas());
+            this.inputBusqueda.on("keyup", () => this.filtrarMascotas());
             this.tabla = contenedor.append("table")
                 .attr("class", "billing-table")
                 .style("width", "100%")
@@ -145,21 +146,21 @@ var N_Mascotas;
             this.actualizarTabla(filtradas);
         }
         editarMascota(mascota) {
-            N_Mascotas.editarMascota(mascota, (actualizada) => __awaiter(this, void 0, void 0, function* () {
+            new N_Mascotas.FormularioEditarMascota(mascota, (actualizada) => __awaiter(this, void 0, void 0, function* () {
                 try {
-                    const response = yield fetch("http://localhost:50587/Mascotas.svc/actualizarmascota", {
+                    const response = yield fetch(`${this.url}/actualizarmascota`, {
                         method: "PUT",
                         headers: {
                             "Content-Type": "application/json"
                         },
-                        body: JSON.stringify({ mascota: actualizada }) // 👈 Envoltorio obligatorio para WCF
+                        body: JSON.stringify({ mascota: actualizada })
                     });
                     if (!response.ok) {
                         throw new Error(`Error HTTP: ${response.status}`);
                     }
                     const result = yield response.json();
                     if (result.ActualizarMascotaResult === true) {
-                        yield this.CargarMascotas(); // recarga con los datos más actualizados
+                        yield this.CargarMascotas();
                     }
                     else {
                         alert("No se pudo actualizar la mascota.");
@@ -172,28 +173,96 @@ var N_Mascotas;
             }));
         }
         eliminarMascota(mascota) {
-            if (confirm(`¿Seguro que deseas eliminar a "${mascota.Nombre}"?`)) {
-                this.mascotas.delete(mascota.Id);
-                this.actualizarTabla();
-            }
+            const fondo = d3.select("body")
+                .append("div")
+                .attr("id", "modal-confirmacion")
+                .style("position", "fixed")
+                .style("top", "0")
+                .style("left", "0")
+                .style("width", "100%")
+                .style("height", "100%")
+                .style("background-color", "rgba(0,0,0,0.6)")
+                .style("display", "flex")
+                .style("justify-content", "center")
+                .style("align-items", "center")
+                .style("z-index", "9999");
+            const contenedor = fondo.append("div")
+                .style("background", "white")
+                .style("padding", "20px")
+                .style("border-radius", "10px")
+                .style("width", "350px")
+                .style("box-shadow", "0 0 10px rgba(0,0,0,0.3)")
+                .style("text-align", "center");
+            contenedor.append("p")
+                .text(`¿Seguro que deseas eliminar a "${mascota.Nombre}"?`)
+                .style("font-size", "16px")
+                .style("color", "#333")
+                .style("margin-bottom", "20px");
+            const botones = contenedor.append("div");
+            botones.append("button")
+                .text("Cancelar")
+                .style("margin-right", "10px")
+                .style("padding", "8px 15px")
+                .style("background-color", "#ccc")
+                .style("border", "none")
+                .style("border-radius", "5px")
+                .style("cursor", "pointer")
+                .on("click", () => {
+                fondo.remove();
+            });
+            botones.append("button")
+                .text("Eliminar")
+                .style("padding", "8px 15px")
+                .style("background-color", "#d9534f")
+                .style("color", "white")
+                .style("border", "none")
+                .style("border-radius", "5px")
+                .style("cursor", "pointer")
+                .on("click", () => {
+                fondo.remove();
+                fetch(`${this.url}/eliminarmascota`, {
+                    method: "DELETE",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ mascota: { Id: mascota.Id } })
+                })
+                    .then(response => {
+                    if (!response.ok)
+                        throw new Error(`Error : ${response.status}`);
+                    return response.json();
+                })
+                    .then(result => {
+                    if (result.EliminarMascotaResult === true) {
+                        this.CargarMascotas();
+                    }
+                    else {
+                        alert("No se pudo eliminar la mascota.");
+                    }
+                })
+                    .catch(error => {
+                    console.error("Error al eliminar mascota:", error);
+                    alert("Ocurrió un error al eliminar la mascota.");
+                });
+            });
         }
         agregarMascota() {
-            N_Mascotas.agregarMascota((nueva) => __awaiter(this, void 0, void 0, function* () {
+            new N_Mascotas.FormularioAgregarMascota((nueva) => __awaiter(this, void 0, void 0, function* () {
                 try {
-                    const response = yield fetch("http://localhost:50587/Mascotas.svc/agregarmascota", {
+                    console.log("Mascota a enviar:", nueva);
+                    const response = yield fetch(`${this.url}/agregarmascota`, {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json"
                         },
-                        body: JSON.stringify({ mascota: nueva }) // 👈 esta es la clave
+                        body: JSON.stringify({ mascota: nueva })
                     });
                     if (!response.ok) {
                         throw new Error(`Error HTTP: ${response.status}`);
                     }
                     const ok = yield response.json();
                     if (ok.AgregarMascotaResult === true) {
-                        // puedes refrescar la lista o hacer un push local
-                        yield this.CargarMascotas(); // mejor para tener el ID real
+                        yield this.CargarMascotas();
                     }
                     else {
                         alert("No se pudo guardar la mascota.");

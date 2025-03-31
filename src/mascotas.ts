@@ -1,5 +1,4 @@
 namespace N_Mascotas {
-
     export interface Mascota {
         Id: number;
         Nombre: string;
@@ -8,7 +7,7 @@ namespace N_Mascotas {
         Raza: string;
         Peso: number;
         Sexo: string;
-        FechaRegistro: string;
+        FechaRegistro?: string;
         IdUsuario: number;
     }
     export class Cls_Mascotas {
@@ -17,6 +16,7 @@ namespace N_Mascotas {
         private formatoFecha = d3.timeFormat("%d/%m/%Y %I:%M %p");
         private mascotas: Map<number, Mascota> = new Map();
         private inputBusqueda: d3.Selection<HTMLInputElement, unknown, HTMLElement, any>;
+        private url: string = "http://192.168.15.225:8080/Mascotas.svc";
 
         constructor() {
             this.UI_CrearTabla();
@@ -25,7 +25,7 @@ namespace N_Mascotas {
 
         private async CargarMascotas(): Promise<void> {
             try {
-                const respuesta = await fetch("http://localhost:50587/Mascotas.svc/obtenermascotas", {
+                const respuesta = await fetch(`${this.url}/obtenermascotas`, {
                     method: "GET",
                     headers: { "Content-Type": "application/json" }
                 });
@@ -61,7 +61,7 @@ namespace N_Mascotas {
             filas.append("td").text(d => d.Especie);
             filas.append("td").text(d => d.Raza);
             filas.append("td").text(d => d.Peso);
-            filas.append("td").text(d => d.Sexo);
+            filas.append("td").text(d => d.Sexo === "H" ? "Hembra" : d.Sexo === "M" ? "Macho" : d.Sexo);
             filas.append("td").text(d => this.formatearFecha(d.FechaRegistro));
 
             filas.append("td").append("button")
@@ -139,7 +139,7 @@ namespace N_Mascotas {
                 .style("border-radius", "5px")
                 .style("width", "200px");
 
-            this.inputBusqueda.on("input", () => this.filtrarMascotas());
+            this.inputBusqueda.on("keyup", () => this.filtrarMascotas());
 
             this.tabla = contenedor.append("table")
                 .attr("class", "billing-table")
@@ -174,14 +174,14 @@ namespace N_Mascotas {
         }
 
         private editarMascota(mascota: Mascota): void {
-            N_Mascotas.editarMascota(mascota, async (actualizada: Mascota) => {
+            new N_Mascotas.FormularioEditarMascota(mascota, async (actualizada: Mascota) => {
                 try {
-                    const response = await fetch("http://localhost:50587/Mascotas.svc/actualizarmascota", {
+                    const response = await fetch(`${this.url}/actualizarmascota`, {
                         method: "PUT",
                         headers: {
                             "Content-Type": "application/json"
                         },
-                        body: JSON.stringify({ mascota: actualizada }) // 👈 Envoltorio obligatorio para WCF
+                        body: JSON.stringify({ mascota: actualizada })
                     });
         
                     if (!response.ok) {
@@ -190,11 +190,10 @@ namespace N_Mascotas {
         
                     const result = await response.json();
                     if (result.ActualizarMascotaResult === true) {
-                        await this.CargarMascotas(); // recarga con los datos más actualizados
+                        await this.CargarMascotas();
                     } else {
                         alert("No se pudo actualizar la mascota.");
                     }
-        
                 } catch (error) {
                     console.error("Error al actualizar mascota:", error);
                     alert("Ocurrió un error al actualizar la mascota.");
@@ -202,24 +201,95 @@ namespace N_Mascotas {
             });
         }
         
-        
-
         private eliminarMascota(mascota: Mascota): void {
-            if (confirm(`¿Seguro que deseas eliminar a "${mascota.Nombre}"?`)) {
-                this.mascotas.delete(mascota.Id);
-                this.actualizarTabla();
-            }
+            const fondo = d3.select("body")
+                .append("div")
+                .attr("id", "modal-confirmacion")
+                .style("position", "fixed")
+                .style("top", "0")
+                .style("left", "0")
+                .style("width", "100%")
+                .style("height", "100%")
+                .style("background-color", "rgba(0,0,0,0.6)")
+                .style("display", "flex")
+                .style("justify-content", "center")
+                .style("align-items", "center")
+                .style("z-index", "9999");
+        
+            const contenedor = fondo.append("div")
+                .style("background", "white")
+                .style("padding", "20px")
+                .style("border-radius", "10px")
+                .style("width", "350px")
+                .style("box-shadow", "0 0 10px rgba(0,0,0,0.3)")
+                .style("text-align", "center");
+        
+            contenedor.append("p")
+                .text(`¿Seguro que deseas eliminar a "${mascota.Nombre}"?`)
+                .style("font-size", "16px")
+                .style("color", "#333")
+                .style("margin-bottom", "20px");
+        
+            const botones = contenedor.append("div");
+        
+            botones.append("button")
+                .text("Cancelar")
+                .style("margin-right", "10px")
+                .style("padding", "8px 15px")
+                .style("background-color", "#ccc")
+                .style("border", "none")
+                .style("border-radius", "5px")
+                .style("cursor", "pointer")
+                .on("click", () => {
+                    fondo.remove();
+                });
+        
+            botones.append("button")
+                .text("Eliminar")
+                .style("padding", "8px 15px")
+                .style("background-color", "#d9534f")
+                .style("color", "white")
+                .style("border", "none")
+                .style("border-radius", "5px")
+                .style("cursor", "pointer")
+                .on("click", () => {
+                    fondo.remove();
+                     fetch(`${this.url}/eliminarmascota`, {
+                        method: "DELETE",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ mascota: { Id: mascota.Id } })
+                    })
+                    .then(response => {
+                        if (!response.ok) throw new Error(`Error : ${response.status}`);
+                        return response.json();
+                    })
+                    .then(result => {
+                        if (result.EliminarMascotaResult === true) {
+                            this.CargarMascotas();
+                        } else {
+                            alert("No se pudo eliminar la mascota.");
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error al eliminar mascota:", error);
+                        alert("Ocurrió un error al eliminar la mascota.");
+                    });
+                });
         }
-
+                
         private agregarMascota(): void {
-            N_Mascotas.agregarMascota(async (nueva: Mascota) => {
-                try {
-                    const response = await fetch("http://localhost:50587/Mascotas.svc/agregarmascota", {
+            new N_Mascotas.FormularioAgregarMascota(async (nueva: Mascota) => {
+                try {                        
+                    console.log("Mascota a enviar:", nueva);
+                    const response = await fetch(`${this.url}/agregarmascota`, {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json"
                         },
-                        body: JSON.stringify({ mascota: nueva }) // 👈 esta es la clave
+
+                        body: JSON.stringify({ mascota: nueva })
                     });
         
                     if (!response.ok) {
@@ -229,8 +299,7 @@ namespace N_Mascotas {
                     const ok = await response.json();
         
                     if (ok.AgregarMascotaResult === true) {
-                        // puedes refrescar la lista o hacer un push local
-                        await this.CargarMascotas(); // mejor para tener el ID real
+                        await this.CargarMascotas();
                     } else {
                         alert("No se pudo guardar la mascota.");
                     }
