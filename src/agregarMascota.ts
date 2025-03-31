@@ -42,7 +42,6 @@ namespace N_Mascotas {
 
                 const data = await response.json();
                 return data.ObtenerUsuariosResult || [];
-
             } catch (error) {
                 console.error("Error al cargar usuarios:", error);
                 return [];
@@ -122,11 +121,18 @@ namespace N_Mascotas {
             this.selectSexo.append("option").attr("value", "H").text("Hembra");
             this.selectSexo.append("option").attr("value", "M").text("Macho");
 
+            // Campo Usuario con ícono de +
             form.append("label").text("Usuario").style("display", "block").style("margin-top", "10px");
-            this.selectUsuario = form.append("select")
-                .style("width", "100%")
-                .style("padding", "5px")
+
+            const contenedorUsuario = form.append("div")
+                .style("display", "flex")
+                .style("align-items", "center")
+                .style("gap", "10px")
                 .style("margin-top", "5px");
+
+            this.selectUsuario = contenedorUsuario.append("select")
+                .style("flex", "1")
+                .style("padding", "5px");
 
             usuarios.forEach(usuario => {
                 this.selectUsuario.append("option")
@@ -134,6 +140,42 @@ namespace N_Mascotas {
                     .text(usuario.Nombre);
             });
 
+            const btnAgregarUsuario = contenedorUsuario.append("div")
+                .style("width", "20px")
+                .style("height", "20px")
+                .style("cursor", "pointer")
+                .attr("title", "Agregar nuevo usuario");
+
+            const svg = btnAgregarUsuario.append("svg")
+                .attr("width", 20)
+                .attr("height", 20)
+                .attr("viewBox", "0 0 20 20");
+
+            svg.append("rect")
+                .attr("x", 9)
+                .attr("y", 2)
+                .attr("width", 2)
+                .attr("height", 16)
+                .attr("fill", "#007bff");
+
+            svg.append("rect")
+                .attr("x", 2)
+                .attr("y", 9)
+                .attr("width", 16)
+                .attr("height", 2)
+                .attr("fill", "#007bff");
+
+                btnAgregarUsuario.on("click", () => {
+                    new N_Mascotas.FormularioAgregarUsuario((nuevoUsuario: Usuario) => {
+                        this.selectUsuario.append("option")
+                            .attr("value", nuevoUsuario.Id)
+                            .text(nuevoUsuario.Nombre)
+                            .property("selected", true);
+                    });
+                });
+                
+
+            // Botón Guardar
             form.append("button")
                 .text("Guardar")
                 .style("margin-top", "20px")
