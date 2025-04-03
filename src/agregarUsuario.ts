@@ -35,16 +35,33 @@ namespace N_Mascotas {
                 .style("text-align", "center")
                 .style("margin-bottom", "15px");
 
-            const inputs: { [key: string]: d3.Selection<HTMLInputElement, unknown, HTMLElement, any> } = {};
+            form.append("label").text("Nombre").style("display", "block").style("margin-top", "10px");
+            const inputNombre = form.append("input")
+                .attr("type", "text")
+                .style("width", "100%")
+                .style("padding", "5px")
+                .style("margin-top", "5px");
 
-            ["Nombre", "Correo", "Telefono", "Direccion"].forEach(campo => {
-                form.append("label").text(campo).style("display", "block").style("margin-top", "10px");
-                inputs[campo] = form.append("input")
-                    .attr("type", "text")
-                    .style("width", "100%")
-                    .style("padding", "5px")
-                    .style("margin-top", "5px");
-            });
+            form.append("label").text("Correo").style("display", "block").style("margin-top", "10px");
+            const inputCorreo = form.append("input")
+                .attr("type", "email")
+                .style("width", "100%")
+                .style("padding", "5px")
+                .style("margin-top", "5px");
+
+            form.append("label").text("Teléfono").style("display", "block").style("margin-top", "10px");
+            const inputTelefono = form.append("input")
+                .attr("type", "tel")
+                .style("width", "100%")
+                .style("padding", "5px")
+                .style("margin-top", "5px");
+
+            form.append("label").text("Dirección").style("display", "block").style("margin-top", "10px");
+            const inputDireccion = form.append("input")
+                .attr("type", "text")
+                .style("width", "100%")
+                .style("padding", "5px")
+                .style("margin-top", "5px");
 
             form.append("button")
                 .text("Guardar Usuario")
@@ -58,10 +75,10 @@ namespace N_Mascotas {
                 .on("click", async () => {
                     const nuevo: Usuario = {
                         Id: 0,
-                        Nombre: inputs.Nombre.property("value"),
-                        Correo: inputs.Correo.property("value"),
-                        Telefono: inputs.Telefono.property("value"),
-                        Direccion: inputs.Direccion.property("value")
+                        Nombre: inputNombre.property("value"),
+                        Correo: inputCorreo.property("value"),
+                        Telefono: inputTelefono.property("value"),
+                        Direccion: inputDireccion.property("value")
                     };
 
                     try {
@@ -74,7 +91,6 @@ namespace N_Mascotas {
                         const result = await response.json();
 
                         if (result.AgregarUsuarioResult === true) {
-                            // Recargar todos los usuarios para obtener el ID real
                             const usuariosResponse = await fetch(`${this.url}/obtenerusuarios`, {
                                 method: "GET",
                                 headers: { "Content-Type": "application/json" }
@@ -83,7 +99,6 @@ namespace N_Mascotas {
                             const usuariosData = await usuariosResponse.json();
                             const usuarios: Usuario[] = usuariosData.ObtenerUsuariosResult || [];
 
-                            // Buscar el usuario recién insertado por nombre y correo
                             const ultimo = usuarios.find(u =>
                                 u.Nombre === nuevo.Nombre &&
                                 u.Correo === nuevo.Correo
@@ -91,7 +106,7 @@ namespace N_Mascotas {
 
                             if (ultimo) {
                                 nuevo.Id = ultimo.Id;
-                                this.onUsuarioAgregado(nuevo); // Actualiza el select en el formulario de mascotas
+                                this.onUsuarioAgregado(nuevo);
                             }
 
                             modal.remove();

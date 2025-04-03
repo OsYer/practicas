@@ -159,8 +159,6 @@ var N_Mascotas;
                     .text(usuario.Nombre)
                     .property("selected", usuario.Id === this.mascota.IdUsuario);
             });
-            // Input de búsqueda (para seguir tu estructura)
-            // Botón Guardar
             form
                 .append("button")
                 .text("Guardar")
@@ -185,7 +183,6 @@ var N_Mascotas;
                 this.onGuardar(actualizada);
                 modal.remove();
             });
-            // Botón Cancelar
             form
                 .append("button")
                 .text("Cancelar")

@@ -39,15 +39,30 @@ var N_Mascotas;
                 .text("Agregar Usuario")
                 .style("text-align", "center")
                 .style("margin-bottom", "15px");
-            const inputs = {};
-            ["Nombre", "Correo", "Telefono", "Direccion"].forEach(campo => {
-                form.append("label").text(campo).style("display", "block").style("margin-top", "10px");
-                inputs[campo] = form.append("input")
-                    .attr("type", "text")
-                    .style("width", "100%")
-                    .style("padding", "5px")
-                    .style("margin-top", "5px");
-            });
+            form.append("label").text("Nombre").style("display", "block").style("margin-top", "10px");
+            const inputNombre = form.append("input")
+                .attr("type", "text")
+                .style("width", "100%")
+                .style("padding", "5px")
+                .style("margin-top", "5px");
+            form.append("label").text("Correo").style("display", "block").style("margin-top", "10px");
+            const inputCorreo = form.append("input")
+                .attr("type", "email")
+                .style("width", "100%")
+                .style("padding", "5px")
+                .style("margin-top", "5px");
+            form.append("label").text("Teléfono").style("display", "block").style("margin-top", "10px");
+            const inputTelefono = form.append("input")
+                .attr("type", "tel")
+                .style("width", "100%")
+                .style("padding", "5px")
+                .style("margin-top", "5px");
+            form.append("label").text("Dirección").style("display", "block").style("margin-top", "10px");
+            const inputDireccion = form.append("input")
+                .attr("type", "text")
+                .style("width", "100%")
+                .style("padding", "5px")
+                .style("margin-top", "5px");
             form.append("button")
                 .text("Guardar Usuario")
                 .style("margin-top", "20px")
@@ -60,10 +75,10 @@ var N_Mascotas;
                 .on("click", () => __awaiter(this, void 0, void 0, function* () {
                 const nuevo = {
                     Id: 0,
-                    Nombre: inputs.Nombre.property("value"),
-                    Correo: inputs.Correo.property("value"),
-                    Telefono: inputs.Telefono.property("value"),
-                    Direccion: inputs.Direccion.property("value")
+                    Nombre: inputNombre.property("value"),
+                    Correo: inputCorreo.property("value"),
+                    Telefono: inputTelefono.property("value"),
+                    Direccion: inputDireccion.property("value")
                 };
                 try {
                     const response = yield fetch(`${this.url}/agregarusuario`, {
@@ -73,19 +88,17 @@ var N_Mascotas;
                     });
                     const result = yield response.json();
                     if (result.AgregarUsuarioResult === true) {
-                        // Recargar todos los usuarios para obtener el ID real
                         const usuariosResponse = yield fetch(`${this.url}/obtenerusuarios`, {
                             method: "GET",
                             headers: { "Content-Type": "application/json" }
                         });
                         const usuariosData = yield usuariosResponse.json();
                         const usuarios = usuariosData.ObtenerUsuariosResult || [];
-                        // Buscar el usuario recién insertado por nombre y correo
                         const ultimo = usuarios.find(u => u.Nombre === nuevo.Nombre &&
                             u.Correo === nuevo.Correo);
                         if (ultimo) {
                             nuevo.Id = ultimo.Id;
-                            this.onUsuarioAgregado(nuevo); // Actualiza el select en el formulario de mascotas
+                            this.onUsuarioAgregado(nuevo);
                         }
                         modal.remove();
                     }

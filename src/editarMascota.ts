@@ -3,49 +3,13 @@ namespace N_Mascotas {
     private onGuardar: (actualizada: Mascota) => void;
     private mascota: Mascota;
     private url: string = "http://192.168.15.225:8080/Usuarios.svc";
-
-    private inputNombre!: d3.Selection<
-      HTMLInputElement,
-      unknown,
-      HTMLElement,
-      any
-    >;
-    private inputEdad!: d3.Selection<
-      HTMLInputElement,
-      unknown,
-      HTMLElement,
-      any
-    >;
-    private inputEspecie!: d3.Selection<
-      HTMLInputElement,
-      unknown,
-      HTMLElement,
-      any
-    >;
-    private inputRaza!: d3.Selection<
-      HTMLInputElement,
-      unknown,
-      HTMLElement,
-      any
-    >;
-    private inputPeso!: d3.Selection<
-      HTMLInputElement,
-      unknown,
-      HTMLElement,
-      any
-    >;
-    private selectSexo!: d3.Selection<
-      HTMLSelectElement,
-      unknown,
-      HTMLElement,
-      any
-    >;
-    private selectUsuario!: d3.Selection<
-      HTMLSelectElement,
-      unknown,
-      HTMLElement,
-      any
-    >;
+    private inputNombre!: d3.Selection<HTMLInputElement, unknown, HTMLElement, any>;
+    private inputEdad!: d3.Selection<HTMLInputElement, unknown, HTMLElement, any>;
+    private inputEspecie!: d3.Selection<HTMLInputElement, unknown, HTMLElement, any>;
+    private inputRaza!: d3.Selection<HTMLInputElement, unknown, HTMLElement, any>;
+    private inputPeso!: d3.Selection<HTMLInputElement, unknown, HTMLElement, any>;
+    private selectSexo!: d3.Selection<HTMLSelectElement, unknown, HTMLElement, any>;
+    private selectUsuario!: d3.Selection<HTMLSelectElement, unknown, HTMLElement, any>;
 
     constructor(mascota: Mascota, onGuardar: (actualizada: Mascota) => void) {
       this.mascota = mascota;
@@ -208,9 +172,6 @@ namespace N_Mascotas {
           .property("selected", usuario.Id === this.mascota.IdUsuario);
       });
 
-      // Input de búsqueda (para seguir tu estructura)
-
-      // Botón Guardar
       form
         .append("button")
         .text("Guardar")
@@ -237,7 +198,6 @@ namespace N_Mascotas {
           modal.remove();
         });
 
-      // Botón Cancelar
       form
         .append("button")
         .text("Cancelar")
