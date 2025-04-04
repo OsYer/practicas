@@ -13,14 +13,24 @@ var N_Mascotas;
         constructor() {
             this.formatoFecha = d3.timeFormat("%d/%m/%Y %I:%M %p");
             this.mascotas = new Map();
-            this.url = "http://192.168.15.225:8080/Mascotas.svc";
+            this.url = "http://192.168.15.225:8080//Mascotas.svc";
+            this.ultimaSincronizacion = null;
             this.UI_CrearTabla();
             this.CargarMascotas();
+            setInterval(() => {
+                this.CargarMascotas();
+            }, 15000);
         }
         CargarMascotas() {
             return __awaiter(this, void 0, void 0, function* () {
+                var _a, _b;
                 try {
-                    const respuesta = yield fetch(`${this.url}/obtenermascotas`, {
+                    let url = `${this.url}/obtenermascotas`;
+                    if (this.ultimaSincronizacion) {
+                        const isoFecha = this.ultimaSincronizacion.toISOString();
+                        url = `${this.url}/obtenermascotasactualizadas?desde=${encodeURIComponent(isoFecha)}`;
+                    }
+                    const respuesta = yield fetch(url, {
                         method: "GET",
                         headers: { "Content-Type": "application/json" }
                     });
@@ -28,10 +38,37 @@ var N_Mascotas;
                         throw new Error("Error al obtener las mascotas, código: " + respuesta.status);
                     }
                     const data = yield respuesta.json();
-                    const mascotasArray = data.ObtenerMascotasResult;
-                    this.mascotas.clear();
+                    const mascotasArray = (_a = data.ObtenerMascotasActualizadasResult) !== null && _a !== void 0 ? _a : data.ObtenerMascotasResult;
                     mascotasArray.forEach(m => this.mascotas.set(m.Id, m));
+                    console.log("🔄 Mascotas recibidas:", mascotasArray.length);
+                    console.log("⏱ Última sincronización:", (_b = this.ultimaSincronizacion) === null || _b === void 0 ? void 0 : _b.toISOString());
+                    this.ultimaSincronizacion = new Date(); // ⏱ Actualiza el timestamp de última sincronización
                     this.actualizarTabla();
+                    // 👉 NUEVO BLOQUE: sincronizar eliminaciones lógicas
+                    if (this.ultimaSincronizacion) {
+                        const isoFecha = this.ultimaSincronizacion.toISOString();
+                        const urlEliminadas = `${this.url}/obtenermascotaseliminadas?desde=${encodeURIComponent(isoFecha)}`;
+                        try {
+                            const resEliminadas = yield fetch(urlEliminadas, {
+                                method: "GET",
+                                headers: { "Content-Type": "application/json" }
+                            });
+                            if (resEliminadas.ok) {
+                                const dataEliminadas = yield resEliminadas.json();
+                                const ids = dataEliminadas.ObtenerMascotasEliminadasResult;
+                                ids.forEach(id => {
+                                    if (this.mascotas.has(id)) {
+                                        this.mascotas.delete(id);
+                                        console.log(`🗑 Mascota ID ${id} eliminada del mapa automáticamente`);
+                                    }
+                                });
+                                this.actualizarTabla();
+                            }
+                        }
+                        catch (e) {
+                            console.warn("❌ Error al sincronizar eliminaciones:", e);
+                        }
+                    }
                 }
                 catch (error) {
                     console.error("Error al cargar las mascotas:", error);
@@ -234,7 +271,8 @@ var N_Mascotas;
                 })
                     .then(result => {
                     if (result.EliminarMascotaResult === true) {
-                        this.CargarMascotas();
+                        this.mascotas.delete(mascota.Id);
+                        this.actualizarTabla();
                     }
                     else {
                         alert("No se pudo eliminar la mascota.");
