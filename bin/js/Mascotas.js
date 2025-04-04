@@ -41,10 +41,7 @@ var N_Mascotas;
                     const mascotasArray = (_a = data.ObtenerMascotasActualizadasResult) !== null && _a !== void 0 ? _a : data.ObtenerMascotasResult;
                     mascotasArray.forEach(m => this.mascotas.set(m.Id, m));
                     console.log("🔄 Mascotas recibidas:", mascotasArray.length);
-                    console.log("⏱ Última sincronización:", (_b = this.ultimaSincronizacion) === null || _b === void 0 ? void 0 : _b.toISOString());
-                    this.ultimaSincronizacion = new Date(); // ⏱ Actualiza el timestamp de última sincronización
-                    this.actualizarTabla();
-                    // 👉 NUEVO BLOQUE: sincronizar eliminaciones lógicas
+                    // 🔁 Ahora sincroniza eliminaciones
                     if (this.ultimaSincronizacion) {
                         const isoFecha = this.ultimaSincronizacion.toISOString();
                         const urlEliminadas = `${this.url}/obtenermascotaseliminadas?desde=${encodeURIComponent(isoFecha)}`;
@@ -69,6 +66,9 @@ var N_Mascotas;
                             console.warn("❌ Error al sincronizar eliminaciones:", e);
                         }
                     }
+                    // ✅ AL FINAL se actualiza el timestamp de sincronización
+                    this.ultimaSincronizacion = new Date();
+                    console.log("⏱ Última sincronización:", (_b = this.ultimaSincronizacion) === null || _b === void 0 ? void 0 : _b.toISOString());
                 }
                 catch (error) {
                     console.error("Error al cargar las mascotas:", error);

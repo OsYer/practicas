@@ -27,7 +27,6 @@ namespace N_Mascotas {
         }
 
         private ultimaSincronizacion: Date | null = null;
-
         private async CargarMascotas(): Promise<void> {
             try {
                 let url = `${this.url}/obtenermascotas`;
@@ -50,44 +49,45 @@ namespace N_Mascotas {
         
                 mascotasArray.forEach(m => this.mascotas.set(m.Id, m));
                 console.log("🔄 Mascotas recibidas:", mascotasArray.length);
+        
+                // 🔁 Ahora sincroniza eliminaciones
+                if (this.ultimaSincronizacion) {
+                    const isoFecha = this.ultimaSincronizacion.toISOString();
+                    const urlEliminadas = `${this.url}/obtenermascotaseliminadas?desde=${encodeURIComponent(isoFecha)}`;
+            
+                    try {
+                        const resEliminadas = await fetch(urlEliminadas, {
+                            method: "GET",
+                            headers: { "Content-Type": "application/json" }
+                        });
+            
+                        if (resEliminadas.ok) {
+                            const dataEliminadas = await resEliminadas.json();
+                            const ids: number[] = dataEliminadas.ObtenerMascotasEliminadasResult;
+            
+                            ids.forEach(id => {
+                                if (this.mascotas.has(id)) {
+                                    this.mascotas.delete(id);
+                                    console.log(`🗑 Mascota ID ${id} eliminada del mapa automáticamente`);
+                                }
+                            });
+        
+                            this.actualizarTabla(); 
+                        }
+                    } catch (e) {
+                        console.warn("❌ Error al sincronizar eliminaciones:", e);
+                    }
+                }
+        
+                // ✅ AL FINAL se actualiza el timestamp de sincronización
+                this.ultimaSincronizacion = new Date();
                 console.log("⏱ Última sincronización:", this.ultimaSincronizacion?.toISOString());
         
-                this.ultimaSincronizacion = new Date(); // ⏱ Actualiza el timestamp de última sincronización
-                this.actualizarTabla();
-                // 👉 NUEVO BLOQUE: sincronizar eliminaciones lógicas
-if (this.ultimaSincronizacion) {
-    const isoFecha = this.ultimaSincronizacion.toISOString();
-    const urlEliminadas = `${this.url}/obtenermascotaseliminadas?desde=${encodeURIComponent(isoFecha)}`;
-
-    try {
-        const resEliminadas = await fetch(urlEliminadas, {
-            method: "GET",
-            headers: { "Content-Type": "application/json" }
-        });
-
-        if (resEliminadas.ok) {
-            const dataEliminadas = await resEliminadas.json();
-            const ids: number[] = dataEliminadas.ObtenerMascotasEliminadasResult;
-
-            ids.forEach(id => {
-                if (this.mascotas.has(id)) {
-                    this.mascotas.delete(id);
-                    console.log(`🗑 Mascota ID ${id} eliminada del mapa automáticamente`);
-                }
-            });
-
-            this.actualizarTabla(); 
-        }
-    } catch (e) {
-        console.warn("❌ Error al sincronizar eliminaciones:", e);
-    }
-}
-
             } catch (error) {
                 console.error("Error al cargar las mascotas:", error);
             }
         }
-        
+              
 
         private actualizarTabla(mascotasFiltradas?: Mascota[]): void {
             const datos = mascotasFiltradas || Array.from(this.mascotas.values());
