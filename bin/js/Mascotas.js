@@ -13,7 +13,8 @@ var N_Mascotas;
         constructor() {
             this.formatoFecha = d3.timeFormat("%d/%m/%Y %I:%M %p");
             this.mascotas = new Map();
-            this.url = "http://192.168.15.225:8080//Mascotas.svc";
+            // private url: string = "http://192.168.15.225:8080/Mascotas.svc";
+            this.url = "http://localhost:50587/Mascotas.svc";
             this.ultimaSincronizacion = null;
             this.UI_CrearTabla();
             this.CargarMascotas();
@@ -24,11 +25,12 @@ var N_Mascotas;
         CargarMascotas() {
             return __awaiter(this, void 0, void 0, function* () {
                 var _a, _b;
+                let cambios = false;
                 try {
-                    let url = `${this.url}/obtenermascotas`;
+                    let url = `${this.url}/obtenermascotasfiltro`;
                     if (this.ultimaSincronizacion) {
                         const isoFecha = this.ultimaSincronizacion.toISOString();
-                        url = `${this.url}/obtenermascotasactualizadas?desde=${encodeURIComponent(isoFecha)}`;
+                        url += `?fecha=${encodeURIComponent(isoFecha)}`;
                     }
                     const respuesta = yield fetch(url, {
                         method: "GET",
@@ -38,37 +40,20 @@ var N_Mascotas;
                         throw new Error("Error al obtener las mascotas, código: " + respuesta.status);
                     }
                     const data = yield respuesta.json();
-                    const mascotasArray = (_a = data.ObtenerMascotasActualizadasResult) !== null && _a !== void 0 ? _a : data.ObtenerMascotasResult;
-                    mascotasArray.forEach(m => this.mascotas.set(m.Id, m));
-                    console.log("🔄 Mascotas recibidas:", mascotasArray.length);
-                    // 🔁 Ahora sincroniza eliminaciones
-                    if (this.ultimaSincronizacion) {
-                        const isoFecha = this.ultimaSincronizacion.toISOString();
-                        const urlEliminadas = `${this.url}/obtenermascotaseliminadas?desde=${encodeURIComponent(isoFecha)}`;
-                        try {
-                            const resEliminadas = yield fetch(urlEliminadas, {
-                                method: "GET",
-                                headers: { "Content-Type": "application/json" }
-                            });
-                            if (resEliminadas.ok) {
-                                const dataEliminadas = yield resEliminadas.json();
-                                const ids = dataEliminadas.ObtenerMascotasEliminadasResult;
-                                ids.forEach(id => {
-                                    if (this.mascotas.has(id)) {
-                                        this.mascotas.delete(id);
-                                        console.log(`🗑 Mascota ID ${id} eliminada del mapa automáticamente`);
-                                    }
-                                });
-                                this.actualizarTabla();
-                            }
+                    const mascotasArray = (_a = data.ObtenerMascotasFiltroResult) !== null && _a !== void 0 ? _a : [];
+                    mascotasArray.forEach(m => {
+                        const actual = this.mascotas.get(m.Id);
+                        if (!actual || JSON.stringify(actual) !== JSON.stringify(m)) {
+                            this.mascotas.set(m.Id, m);
+                            cambios = true;
                         }
-                        catch (e) {
-                            console.warn("❌ Error al sincronizar eliminaciones:", e);
-                        }
+                    });
+                    console.log("Mascotas recibidas:", mascotasArray.length);
+                    if (cambios) {
+                        this.actualizarTabla();
                     }
-                    // ✅ AL FINAL se actualiza el timestamp de sincronización
                     this.ultimaSincronizacion = new Date();
-                    console.log("⏱ Última sincronización:", (_b = this.ultimaSincronizacion) === null || _b === void 0 ? void 0 : _b.toISOString());
+                    console.log("Última sincronización:", (_b = this.ultimaSincronizacion) === null || _b === void 0 ? void 0 : _b.toISOString());
                 }
                 catch (error) {
                     console.error("Error al cargar las mascotas:", error);

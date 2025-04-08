@@ -16,8 +16,8 @@ namespace N_Mascotas {
         private formatoFecha = d3.timeFormat("%d/%m/%Y %I:%M %p");
         private mascotas: Map<number, Mascota> = new Map();
         private inputBusqueda: d3.Selection<HTMLInputElement, unknown, HTMLElement, any>;
-        private url: string = "http://192.168.15.225:8080//Mascotas.svc";
-
+        // private url: string = "http://192.168.15.225:8080/Mascotas.svc";
+        private url: string = "http://localhost:50587/Mascotas.svc";
         constructor() {
             this.UI_CrearTabla();
             this.CargarMascotas();
@@ -28,66 +28,45 @@ namespace N_Mascotas {
 
         private ultimaSincronizacion: Date | null = null;
         private async CargarMascotas(): Promise<void> {
+            let cambios = false;
             try {
-                let url = `${this.url}/obtenermascotas`;
+                let url = `${this.url}/obtenermascotasfiltro`;
                 if (this.ultimaSincronizacion) {
                     const isoFecha = this.ultimaSincronizacion.toISOString();
-                    url = `${this.url}/obtenermascotasactualizadas?desde=${encodeURIComponent(isoFecha)}`;
+                    url += `?fecha=${encodeURIComponent(isoFecha)}`;
                 }
-        
+                
                 const respuesta = await fetch(url, {
                     method: "GET",
                     headers: { "Content-Type": "application/json" }
                 });
-        
+
                 if (!respuesta.ok) {
                     throw new Error("Error al obtener las mascotas, código: " + respuesta.status);
                 }
-        
+
                 const data = await respuesta.json();
-                const mascotasArray: Mascota[] = data.ObtenerMascotasActualizadasResult ?? data.ObtenerMascotasResult;
-        
-                mascotasArray.forEach(m => this.mascotas.set(m.Id, m));
-                console.log("🔄 Mascotas recibidas:", mascotasArray.length);
-        
-                // 🔁 Ahora sincroniza eliminaciones
-                if (this.ultimaSincronizacion) {
-                    const isoFecha = this.ultimaSincronizacion.toISOString();
-                    const urlEliminadas = `${this.url}/obtenermascotaseliminadas?desde=${encodeURIComponent(isoFecha)}`;
-            
-                    try {
-                        const resEliminadas = await fetch(urlEliminadas, {
-                            method: "GET",
-                            headers: { "Content-Type": "application/json" }
-                        });
-            
-                        if (resEliminadas.ok) {
-                            const dataEliminadas = await resEliminadas.json();
-                            const ids: number[] = dataEliminadas.ObtenerMascotasEliminadasResult;
-            
-                            ids.forEach(id => {
-                                if (this.mascotas.has(id)) {
-                                    this.mascotas.delete(id);
-                                    console.log(`🗑 Mascota ID ${id} eliminada del mapa automáticamente`);
-                                }
-                            });
-        
-                            this.actualizarTabla(); 
-                        }
-                    } catch (e) {
-                        console.warn("❌ Error al sincronizar eliminaciones:", e);
+                const mascotasArray: Mascota[] = data.ObtenerMascotasFiltroResult ?? [];
+
+                mascotasArray.forEach(m => {
+                    const actual = this.mascotas.get(m.Id);
+                    if (!actual || JSON.stringify(actual) !== JSON.stringify(m)) {
+                        this.mascotas.set(m.Id, m);
+                        cambios = true;
                     }
+                });
+                console.log("Mascotas recibidas:", mascotasArray.length);
+                if (cambios) {
+                    this.actualizarTabla();
                 }
-        
-                // ✅ AL FINAL se actualiza el timestamp de sincronización
                 this.ultimaSincronizacion = new Date();
-                console.log("⏱ Última sincronización:", this.ultimaSincronizacion?.toISOString());
-        
+                console.log("Última sincronización:", this.ultimaSincronizacion?.toISOString());
+
             } catch (error) {
                 console.error("Error al cargar las mascotas:", error);
             }
         }
-              
+
 
         private actualizarTabla(mascotasFiltradas?: Mascota[]): void {
             const datos = mascotasFiltradas || Array.from(this.mascotas.values());
@@ -226,11 +205,11 @@ namespace N_Mascotas {
                         },
                         body: JSON.stringify({ mascota: actualizada })
                     });
-        
+
                     if (!response.ok) {
                         throw new Error(`Error HTTP: ${response.status}`);
                     }
-        
+
                     const result = await response.json();
                     if (result.ActualizarMascotaResult === true) {
                         await this.CargarMascotas();
@@ -243,7 +222,7 @@ namespace N_Mascotas {
                 }
             });
         }
-        
+
         private eliminarMascota(mascota: Mascota): void {
             const fondo = d3.select("body")
                 .append("div")
@@ -258,7 +237,7 @@ namespace N_Mascotas {
                 .style("justify-content", "center")
                 .style("align-items", "center")
                 .style("z-index", "9999");
-        
+
             const contenedor = fondo.append("div")
                 .style("background", "white")
                 .style("padding", "20px")
@@ -266,15 +245,15 @@ namespace N_Mascotas {
                 .style("width", "350px")
                 .style("box-shadow", "0 0 10px rgba(0,0,0,0.3)")
                 .style("text-align", "center");
-        
+
             contenedor.append("p")
                 .text(`¿Seguro que deseas eliminar a "${mascota.Nombre}"?`)
                 .style("font-size", "16px")
                 .style("color", "#333")
                 .style("margin-bottom", "20px");
-        
+
             const botones = contenedor.append("div");
-        
+
             botones.append("button")
                 .text("Cancelar")
                 .style("margin-right", "10px")
@@ -286,7 +265,7 @@ namespace N_Mascotas {
                 .on("click", () => {
                     fondo.remove();
                 });
-        
+
             botones.append("button")
                 .text("Eliminar")
                 .style("padding", "8px 15px")
@@ -297,35 +276,35 @@ namespace N_Mascotas {
                 .style("cursor", "pointer")
                 .on("click", () => {
                     fondo.remove();
-                     fetch(`${this.url}/eliminarmascota`, {
+                    fetch(`${this.url}/eliminarmascota`, {
                         method: "DELETE",
                         headers: {
                             "Content-Type": "application/json"
                         },
                         body: JSON.stringify({ mascota: { Id: mascota.Id } })
                     })
-                    .then(response => {
-                        if (!response.ok) throw new Error(`Error : ${response.status}`);
-                        return response.json();
-                    })
-                    .then(result => {
-                        if (result.EliminarMascotaResult === true) {
-                            this.mascotas.delete(mascota.Id); 
-                            this.actualizarTabla();          
-                        } else {
-                            alert("No se pudo eliminar la mascota.");
-                        }                        
-                    })
-                    .catch(error => {
-                        console.error("Error al eliminar mascota:", error);
-                        alert("Ocurrió un error al eliminar la mascota.");
-                    });
+                        .then(response => {
+                            if (!response.ok) throw new Error(`Error : ${response.status}`);
+                            return response.json();
+                        })
+                        .then(result => {
+                            if (result.EliminarMascotaResult === true) {
+                                this.mascotas.delete(mascota.Id);
+                                this.actualizarTabla();
+                            } else {
+                                alert("No se pudo eliminar la mascota.");
+                            }
+                        })
+                        .catch(error => {
+                            console.error("Error al eliminar mascota:", error);
+                            alert("Ocurrió un error al eliminar la mascota.");
+                        });
                 });
         }
-                
+
         private agregarMascota(): void {
             new N_Mascotas.FormularioAgregarMascota(async (nueva: Mascota) => {
-                try {                        
+                try {
                     console.log("Mascota a enviar:", nueva);
                     const response = await fetch(`${this.url}/agregarmascota`, {
                         method: "POST",
@@ -335,26 +314,26 @@ namespace N_Mascotas {
 
                         body: JSON.stringify({ mascota: nueva })
                     });
-        
+
                     if (!response.ok) {
                         throw new Error(`Error HTTP: ${response.status}`);
                     }
-        
+
                     const ok = await response.json();
-        
+
                     if (ok.AgregarMascotaResult === true) {
                         await this.CargarMascotas();
                     } else {
                         alert("No se pudo guardar la mascota.");
                     }
-        
+
                 } catch (error) {
                     console.error("Error al registrar mascota:", error);
                     alert("Hubo un error al registrar la mascota.");
                 }
             });
         }
-        
+
     }
 }
 
