@@ -24,7 +24,7 @@ var N_Mascotas;
         }
         CargarMascotas() {
             return __awaiter(this, void 0, void 0, function* () {
-                var _a, _b;
+                var _a;
                 let cambios = false;
                 try {
                     let url = `${this.url}/obtenermascotasfiltro`;
@@ -45,6 +45,7 @@ var N_Mascotas;
                         const actual = this.mascotas.get(m.Id);
                         if (!actual || JSON.stringify(actual) !== JSON.stringify(m)) {
                             this.mascotas.set(m.Id, m);
+                            // console.log(this.mascotas);
                             cambios = true;
                         }
                     });
@@ -52,8 +53,14 @@ var N_Mascotas;
                     if (cambios) {
                         this.actualizarTabla();
                     }
-                    this.ultimaSincronizacion = new Date();
-                    console.log("Última sincronización:", (_b = this.ultimaSincronizacion) === null || _b === void 0 ? void 0 : _b.toISOString());
+                    const fechasEdicion = mascotasArray
+                        .map(m => m.FechaEdicion ? new Date(parseInt(m.FechaEdicion.replace("/Date(", "").replace(")/", ""))) : null)
+                        .filter((f) => f !== null);
+                    if (fechasEdicion.length > 0) {
+                        const maxFecha = new Date(Math.max(...fechasEdicion.map(f => f.getTime())));
+                        maxFecha.setMilliseconds(maxFecha.getMilliseconds() + 1); // <<--- Aumenta 1ms
+                        this.ultimaSincronizacion = maxFecha;
+                    }
                 }
                 catch (error) {
                     console.error("Error al cargar las mascotas:", error);

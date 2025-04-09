@@ -8,6 +8,8 @@ namespace N_Mascotas {
         Peso: number;
         Sexo: string;
         FechaRegistro?: string;
+        FechaEdicion?: string;
+        Activo?: boolean;
         IdUsuario: number;
     }
     export class Cls_Mascotas {
@@ -35,7 +37,7 @@ namespace N_Mascotas {
                     const isoFecha = this.ultimaSincronizacion.toISOString();
                     url += `?fecha=${encodeURIComponent(isoFecha)}`;
                 }
-                
+
                 const respuesta = await fetch(url, {
                     method: "GET",
                     headers: { "Content-Type": "application/json" }
@@ -52,6 +54,7 @@ namespace N_Mascotas {
                     const actual = this.mascotas.get(m.Id);
                     if (!actual || JSON.stringify(actual) !== JSON.stringify(m)) {
                         this.mascotas.set(m.Id, m);
+                        // console.log(this.mascotas);
                         cambios = true;
                     }
                 });
@@ -59,8 +62,16 @@ namespace N_Mascotas {
                 if (cambios) {
                     this.actualizarTabla();
                 }
-                this.ultimaSincronizacion = new Date();
-                console.log("Última sincronización:", this.ultimaSincronizacion?.toISOString());
+                const fechasEdicion = mascotasArray
+                    .map(m => m.FechaEdicion ? new Date(parseInt(m.FechaEdicion.replace("/Date(", "").replace(")/", ""))) : null)
+                    .filter((f): f is Date => f !== null);
+
+                if (fechasEdicion.length > 0) {
+                    const maxFecha = new Date(Math.max(...fechasEdicion.map(f => f.getTime())));
+                    maxFecha.setMilliseconds(maxFecha.getMilliseconds() + 1); // <<--- Aumenta 1ms
+                    this.ultimaSincronizacion = maxFecha;
+
+                }
 
             } catch (error) {
                 console.error("Error al cargar las mascotas:", error);
