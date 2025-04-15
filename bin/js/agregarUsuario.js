@@ -11,7 +11,7 @@ var N_Mascotas;
 (function (N_Mascotas) {
     class FormularioAgregarUsuario {
         constructor(onUsuarioAgregado) {
-            this.url = "http://192.168.15.225:8080/Usuarios.svc";
+            this.url = "http://localhost:50587/Usuarios.svc";
             this.onUsuarioAgregado = onUsuarioAgregado;
             this.crearFormulario();
         }

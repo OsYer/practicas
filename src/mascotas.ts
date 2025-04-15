@@ -28,57 +28,92 @@ namespace N_Mascotas {
             }, 15000);
         }
 
-        private ultimaSincronizacion: Date | null = null;
         private async CargarMascotas(): Promise<void> {
-            let cambios = false;
             try {
-                let url = `${this.url}/obtenermascotasfiltro`;
-                if (this.ultimaSincronizacion) {
-                    const isoFecha = this.ultimaSincronizacion.toISOString();
-                    url += `?fecha=${encodeURIComponent(isoFecha)}`;
-                }
-
-                const respuesta = await fetch(url, {
-                    method: "GET",
-                    headers: { "Content-Type": "application/json" }
-                });
-
-                if (!respuesta.ok) {
-                    throw new Error("Error al obtener las mascotas, código: " + respuesta.status);
-                }
-
-                const data = await respuesta.json();
-                const mascotasArray: Mascota[] = data.ObtenerMascotasFiltroResult ?? [];
-
-                mascotasArray.forEach(m => {
-                    const actual = this.mascotas.get(m.Id);
-                    if (!actual || JSON.stringify(actual) !== JSON.stringify(m)) {
-                        this.mascotas.set(m.Id, m);
-                        // console.log(this.mascotas);
-                        cambios = true;
+                // 1. Obtener la fecha máxima de edición de las mascotas existentes
+                let fechaMax: Date | null = null;
+        
+                this.mascotas.forEach(m => {
+                    if (m.FechaEdicion) {
+                        const ts = parseInt(m.FechaEdicion.replace("/Date(", "").replace(")/", ""));
+                        const actual = new Date(ts);
+                        if (!fechaMax || actual > fechaMax) {
+                            fechaMax = actual;
+                        }
                     }
                 });
-                console.log("Mascotas recibidas:", mascotasArray.length);
-                if (cambios) {
+        
+                // 2. Preparar el filtro para enviar al backend
+                let filtro: any = {};
+                if (fechaMax) {
+                    const isoDate = fechaMax.toISOString(); // Cambiar a formato ISO 8601
+                    filtro = { Fecha: isoDate }; 
+                    console.log("[Mascotas] ➤ Fecha máxima detectada:", isoDate);
+                }
+                 else {
+                    console.log("[Mascotas] ➤ Carga inicial SIN filtro de fecha (primera vez)");
+                }
+        
+                console.log("[Mascotas] ➤ Filtro que se enviará:", filtro);
+        
+                // 3. Realizar la petición al backend
+                const response = await fetch(`${this.url}/obtenermascotasfiltrofecha`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(filtro)
+                });
+                console.log(filtro);
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error("Error en la respuesta de la API:", errorData);
+                    throw new Error(`Error HTTP: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                const nuevas: N_Mascotas.Mascota[] = data.ObtenerMascotasFiltroResult;
+        
+                if (nuevas.length === 0) {
+                    console.log("[Mascotas] ✅ Sin cambios: No se recibieron nuevos registros.");
+                    return;
+                }
+        
+                console.log(`[Mascotas] ✅ Recibidos ${nuevas.length} registros desde el backend.`);
+        
+                let hayCambios = false;
+        
+                for (const m of nuevas) {
+                    const actual = this.mascotas.get(m.Id);
+        
+                    if (!actual) {
+                        this.mascotas.set(m.Id, m);
+                        hayCambios = true;
+                    } else {
+                        const nuevaEdicion = parseInt(m.FechaEdicion?.replace("/Date(", "").replace(")/", "") ?? "0");
+                        const actualEdicion = parseInt(actual.FechaEdicion?.replace("/Date(", "").replace(")/", "") ?? "0");
+        
+                        if (nuevaEdicion > actualEdicion) {
+                            console.log(`[Mascotas] 🔁 Mascota actualizada: ${m.Nombre} (ID: ${m.Id})`);
+                            this.mascotas.set(m.Id, m);
+                            hayCambios = true;
+                        }
+                    }
+                }
+        
+                if (hayCambios) {
+                    console.log("[Mascotas] 🔄 Se actualizará la tabla");
                     this.actualizarTabla();
+                } else {
+                    console.log("[Mascotas] ✅ Sin cambios en esta sincronización");
                 }
-                const fechasEdicion = mascotasArray
-                    .map(m => m.FechaEdicion ? new Date(parseInt(m.FechaEdicion.replace("/Date(", "").replace(")/", ""))) : null)
-                    .filter((f): f is Date => f !== null);
-
-                if (fechasEdicion.length > 0) {
-                    const maxFecha = new Date(Math.max(...fechasEdicion.map(f => f.getTime())));
-                    maxFecha.setMilliseconds(maxFecha.getMilliseconds() + 1); // <<--- Aumenta 1ms
-                    this.ultimaSincronizacion = maxFecha;
-
-                }
-
+        
             } catch (error) {
-                console.error("Error al cargar las mascotas:", error);
+                console.error("❌ Error al cargar mascotas:", error);
             }
         }
-
-
+        
         private actualizarTabla(mascotasFiltradas?: Mascota[]): void {
             const datos = mascotasFiltradas || Array.from(this.mascotas.values());
             this.tablaCuerpo.selectAll("*").remove();
@@ -122,12 +157,20 @@ namespace N_Mascotas {
             if (!fecha) return "Sin fecha";
             try {
                 const timestamp = parseInt(fecha.replace("/Date(", "").replace(")/", ""));
-                const date = new Date(timestamp);
-                return this.formatoFecha(date);
+                const dateUTC = new Date(timestamp);
+        
+                // Ajustar manualmente al huso horario de México (-6 horas)
+                const offset = -6 * 60; // minutos
+                const localTime = new Date(dateUTC.getTime() + offset * 60 * 1000);
+        
+                // Formateo con d3 como lo estás haciendo
+                return this.formatoFecha(localTime);
             } catch {
                 return "Fecha inválida";
             }
         }
+        
+        
 
         private UI_CrearTabla(): void {
             const contenedor = d3.select("body")

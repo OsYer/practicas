@@ -10,7 +10,7 @@ namespace N_Mascotas {
 
     export class FormularioAgregarMascota {
         private onGuardar: (nueva: Mascota) => void;
-        private url: string = "http://192.168.15.225:8080/Usuarios.svc";
+        private url: string = "http://localhost:50587/Usuarios.svc";
         private inputNombre!: d3.Selection<HTMLInputElement, unknown, HTMLElement, any>;
         private inputEdad!: d3.Selection<HTMLInputElement, unknown, HTMLElement, any>;
         private inputEspecie!: d3.Selection<HTMLInputElement, unknown, HTMLElement, any>;

@@ -11,7 +11,7 @@ var N_Mascotas;
 (function (N_Mascotas) {
     class FormularioEditarMascota {
         constructor(mascota, onGuardar) {
-            this.url = "http://192.168.15.225:8080/Usuarios.svc";
+            this.url = "http://localhost:50587/Usuarios.svc";
             this.mascota = mascota;
             this.onGuardar = onGuardar;
             this.init();
