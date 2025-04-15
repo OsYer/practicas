@@ -62,7 +62,8 @@ var N_Mascotas;
                         throw new Error(`Error HTTP: ${response.status}`);
                     }
                     const data = yield response.json();
-                    const nuevas = data.ObtenerMascotasFiltroResult;
+                    console.log("[Mascotas] ➤ Respuesta recibida del backend:", data);
+                    const nuevas = data.ObtenerMascotasFiltroFechaResult;
                     if (nuevas.length === 0) {
                         console.log("[Mascotas] ✅ Sin cambios: No se recibieron nuevos registros.");
                         return;
