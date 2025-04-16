@@ -30,9 +30,9 @@ namespace N_Mascotas {
 
         private async CargarMascotas(): Promise<void> {
             try {
-                // 1. Obtener la fecha máxima de edición de las mascotas existentes
+                // Obtener la fecha máxima de edición actual
                 let fechaMax: Date | null = null;
-
+        
                 this.mascotas.forEach(m => {
                     if (m.FechaEdicion) {
                         const ts = parseInt(m.FechaEdicion.replace("/Date(", "").replace(")/", ""));
@@ -42,79 +42,81 @@ namespace N_Mascotas {
                         }
                     }
                 });
-
-                // 2. Preparar el filtro para enviar al backend
+        
                 let filtro: any = {};
                 if (fechaMax) {
-                    const isoDate = fechaMax.toISOString(); // Cambiar a formato ISO 8601
-                    filtro = { Fecha: isoDate };
-                    console.log("[Mascotas] ➤ Fecha máxima detectada:", isoDate);
+                    // Convertimos la fecha al string ISO 8601 que espera el servicio
+                    const iso = this.formatConMicroOffset(fechaMax);
+                    filtro = { filtro: { Fecha: iso } };
+                    
+                    console.log("[Mascotas] ➤ Fecha máxima encontrada:", iso);
+                } else {
+                    console.log("[Mascotas] ➤ Primera carga sin filtro");
+                    filtro = {}; // sin filtros en la primera vez
                 }
-                else {
-                    console.log("[Mascotas] ➤ Carga inicial SIN filtro de fecha (primera vez)");
-                }
-
-                console.log("[Mascotas] ➤ Filtro que se enviará:", filtro);
-
-                // 3. Realizar la petición al backend
+        
                 const response = await fetch(`${this.url}/obtenermascotasfiltrofecha`, {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
+                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(filtro)
                 });
-                console.log(filtro);
-
+        
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    console.error("Error en la respuesta de la API:", errorData);
-                    throw new Error(`Error HTTP: ${response.status}`);
+                    throw new Error(`HTTP ${response.status}`);
                 }
-
-                const data = await response.json();
-                console.log("[Mascotas] ➤ Respuesta recibida del backend:", data);
-                const nuevas: N_Mascotas.Mascota[] = data.ObtenerMascotasFiltroFechaResult;
-
-                if (nuevas.length === 0) {
-                    console.log("[Mascotas] ✅ Sin cambios: No se recibieron nuevos registros.");
+        
+                const result = await response.json();
+                const nuevasMascotas: Mascota[] = result.ObtenerMascotasFiltroFechaResult;
+        
+                if (!nuevasMascotas || nuevasMascotas.length === 0) {
+                    console.log("[Mascotas] ➤ Sin nuevas mascotas");
                     return;
                 }
-
-                console.log(`[Mascotas] ✅ Recibidos ${nuevas.length} registros desde el backend.`);
-
-                let hayCambios = false;
-
-                for (const m of nuevas) {
-                    const actual = this.mascotas.get(m.Id);
-
-                    if (!actual) {
-                        this.mascotas.set(m.Id, m);
-                        hayCambios = true;
-                    } else {
-                        const nuevaEdicion = parseInt(m.FechaEdicion?.replace("/Date(", "").replace(")/", "") ?? "0");
-                        const actualEdicion = parseInt(actual.FechaEdicion?.replace("/Date(", "").replace(")/", "") ?? "0");
-
-                        if (nuevaEdicion > actualEdicion) {
-                            console.log(`[Mascotas] 🔁 Mascota actualizada: ${m.Nombre} (ID: ${m.Id})`);
-                            this.mascotas.set(m.Id, m);
-                            hayCambios = true;
+        
+                nuevasMascotas.forEach(nueva => {
+                    if (this.mascotas.has(nueva.Id)) {
+                        // Mascota ya existe, actualizamos
+                        const actual = this.mascotas.get(nueva.Id);
+                        if (!actual || nueva.FechaEdicion !== actual.FechaEdicion) {
+                            this.mascotas.set(nueva.Id, nueva);
+                            console.log(`🔄 Mascota actualizada: ${nueva.Nombre}`);
                         }
+                    } else {
+                        // Nueva mascota
+                        this.mascotas.set(nueva.Id, nueva);
+                        console.log(`🆕 Mascota nueva: ${nueva.Nombre}`);
                     }
-                }
-
-                if (hayCambios) {
-                    console.log("[Mascotas] 🔄 Se actualizará la tabla");
-                    this.actualizarTabla();
-                } else {
-                    console.log("[Mascotas] ✅ Sin cambios en esta sincronización");
-                }
-
+                });
+        
+                this.actualizarTabla();
+        
             } catch (error) {
                 console.error("❌ Error al cargar mascotas:", error);
             }
         }
-
+        /** Devuelve "YYYY-MM-DDThh:mm:ss.SSSuuu±HH:MM" */
+        public formatConMicroOffset(dt: Date): string {
+            const pad2 = (n: number) => ("0" + n).slice(-2);
+            const pad3 = (n: number) => ("00" + n).slice(-3);
+          
+            const year   = dt.getFullYear();
+            const month  = pad2(dt.getMonth() + 1);
+            const day    = pad2(dt.getDate());
+            const hour   = pad2(dt.getHours());
+            const minute = pad2(dt.getMinutes());
+            const second = pad2(dt.getSeconds());
+            const milli  = pad3(dt.getMilliseconds());
+            const micro  = milli + "000";      // de 3 a 6 dígitos
+          
+            // Calcula offset en minutos (positivo = UTC+)
+            const offsetMin = -dt.getTimezoneOffset();
+            const sign      = offsetMin >= 0 ? "+" : "-";
+            const offH      = pad2(Math.floor(Math.abs(offsetMin) / 60));
+            const offM      = pad2(Math.abs(offsetMin) % 60);
+          
+            return `${year}-${month}-${day}T${hour}:${minute}:${second}.${micro}${sign}${offH}:${offM}`;
+          }
+          
         private actualizarTabla(mascotasFiltradas?: Mascota[]): void {
             const datos = mascotasFiltradas || Array.from(this.mascotas.values());
             this.tablaCuerpo.selectAll("*").remove();
@@ -132,6 +134,7 @@ namespace N_Mascotas {
             filas.append("td").text(d => d.Peso);
             filas.append("td").text(d => d.Sexo === "H" ? "Hembra" : d.Sexo === "M" ? "Macho" : d.Sexo);
             filas.append("td").text(d => this.formatearFecha(d.FechaRegistro));
+            filas.append("td").text(d => this.formatearFecha(d.FechaEdicion));
 
             filas.append("td").append("button")
                 .text("Editar")
@@ -234,11 +237,33 @@ namespace N_Mascotas {
             encabezadoFila.append("th").text("Peso");
             encabezadoFila.append("th").text("Sexo");
             encabezadoFila.append("th").text("Fecha Registro");
-            encabezadoFila.append("th").text("Acciones");
+            encabezadoFila.append("th")
+            .text("Fecha Edición ")
+            .style("cursor", "pointer")
+            .on("click", () => this.ordenarPorFechaEdicion());
+                    encabezadoFila.append("th").text("Acciones");
 
             this.tablaCuerpo = this.tabla.append("tbody");
         }
-
+        private ordenarPorFechaEdicion(): void {
+            const datosOrdenados = Array.from(this.mascotas.values())
+                .sort((a, b) => {
+                    const fechaA = a.FechaEdicion ? this.obtenerTimestamp(a.FechaEdicion) : 0;
+                    const fechaB = b.FechaEdicion ? this.obtenerTimestamp(b.FechaEdicion) : 0;
+                    return fechaB - fechaA; // más reciente primero
+                });
+        
+            this.actualizarTabla(datosOrdenados);
+        }
+        
+        private obtenerTimestamp(fecha: string): number {
+            try {
+                return parseInt(fecha.replace("/Date(", "").replace(")/", ""));
+            } catch {
+                return 0;
+            }
+        }
+        
         private filtrarMascotas(): void {
             const texto = this.inputBusqueda.property("value").toLowerCase();
 
