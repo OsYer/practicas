@@ -315,7 +315,7 @@ var N_Mascotas;
         agregarMascota() {
             new N_Mascotas.FormularioAgregarMascota((nueva) => __awaiter(this, void 0, void 0, function* () {
                 try {
-                    console.log("Mascota a enviar:", nueva);
+                    console.log("📦 Mascota a enviar:", nueva);
                     const response = yield fetch(`${this.url}/agregarmascota`, {
                         method: "POST",
                         headers: {
@@ -324,19 +324,24 @@ var N_Mascotas;
                         body: JSON.stringify({ mascota: nueva })
                     });
                     if (!response.ok) {
-                        throw new Error(`Error HTTP: ${response.status}`);
+                        const errorText = yield response.text();
+                        console.error("❌ Error HTTP:", errorText);
+                        alert("Error del servidor: " + errorText);
+                        return;
                     }
-                    const ok = yield response.json();
-                    if (ok.AgregarMascotaResult === true) {
+                    const result = yield response.json();
+                    const data = result.AgregarMascotaResult;
+                    if (data.Exito) {
+                        alert("✅ " + data.Mensaje);
                         yield this.CargarMascotas();
                     }
                     else {
-                        alert("No se pudo guardar la mascota.");
+                        alert("❌ " + data.Mensaje);
                     }
                 }
                 catch (error) {
-                    console.error("Error al registrar mascota:", error);
-                    alert("Hubo un error al registrar la mascota.");
+                    console.error("❌ Error al registrar mascota:", error);
+                    alert("Hubo un error inesperado al registrar la mascota.");
                 }
             }));
         }

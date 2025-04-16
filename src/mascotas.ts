@@ -357,37 +357,42 @@ namespace N_Mascotas {
                 });
         }
 
-        private agregarMascota(): void {
-            new N_Mascotas.FormularioAgregarMascota(async (nueva: Mascota) => {
-                try {
-                    console.log("Mascota a enviar:", nueva);
-                    const response = await fetch(`${this.url}/agregarmascota`, {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
+   private agregarMascota(): void {
+    new N_Mascotas.FormularioAgregarMascota(async (nueva: Mascota) => {
+        try {
+            console.log("📦 Mascota a enviar:", nueva);
 
-                        body: JSON.stringify({ mascota: nueva })
-                    });
-
-                    if (!response.ok) {
-                        throw new Error(`Error HTTP: ${response.status}`);
-                    }
-
-                    const ok = await response.json();
-
-                    if (ok.AgregarMascotaResult === true) {
-                        await this.CargarMascotas();
-                    } else {
-                        alert("No se pudo guardar la mascota.");
-                    }
-
-                } catch (error) {
-                    console.error("Error al registrar mascota:", error);
-                    alert("Hubo un error al registrar la mascota.");
-                }
+            const response = await fetch(`${this.url}/agregarmascota`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ mascota: nueva })
             });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error("❌ Error HTTP:", errorText);
+                alert("Error del servidor: " + errorText);
+                return;
+            }
+
+            const result = await response.json();
+            const data = result.AgregarMascotaResult;
+
+            if (data.Exito) {
+                alert("✅ " + data.Mensaje);
+                await this.CargarMascotas();
+            } else {
+                alert("❌ " + data.Mensaje);
+            }
+
+        } catch (error) {
+            console.error("❌ Error al registrar mascota:", error);
+            alert("Hubo un error inesperado al registrar la mascota.");
         }
+    });
+}
 
     }
 }
