@@ -18,7 +18,7 @@ var N_Usuarios;
         cargarUsuarios() {
             return __awaiter(this, void 0, void 0, function* () {
                 try {
-                    const response = yield fetch("js/usuarios.json");
+                    const response = yield fetch("js/x/usuarios.json");
                     const data = yield response.json();
                     data.forEach(usuario => {
                         usuario.fechaRegistro = this.formatearFecha(usuario.fechaRegistro);

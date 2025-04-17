@@ -28,7 +28,7 @@ namespace N_Usuarios {
 
         private async cargarUsuarios(): Promise<void> {
             try {
-                const response = await fetch("js/usuarios.json");
+                const response = await fetch("js/x/usuarios.json");
                 const data: Usuario[] = await response.json();
 
                 data.forEach(usuario => {
