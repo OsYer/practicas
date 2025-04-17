@@ -2,7 +2,7 @@ namespace N_Mascotas {
   export class FormularioEditarMascota {
     private onGuardar: (actualizada: Mascota) => void;
     private mascota: Mascota;
-    private url: string = "http://localhost:50587/Usuarios.svc";
+    private url: string = `${N_Mascotas.DateUtils.ApiBase}/Usuarios.svc`;
     private inputNombre!: d3.Selection<HTMLInputElement, unknown, HTMLElement, any>;
     private inputEdad!: d3.Selection<HTMLInputElement, unknown, HTMLElement, any>;
     private inputEspecie!: d3.Selection<HTMLInputElement, unknown, HTMLElement, any>;
