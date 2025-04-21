@@ -8,7 +8,7 @@ namespace Nm_Mascotas {
     Peso: number;
     Sexo: string;
     IdUsuario: number;
-    FechaRegistro: string;   // puede ser Date o string, dependiendo de cómo lo manejes
-    FechaEdicion: string;    // puede ser Date o string
-    Activo: boolean;
+    FechaRegistro?: string;   // puede ser Date o string, dependiendo de cómo lo manejes
+    FechaEdicion?: string;    // puede ser Date o string
+    Activo?: boolean;
 }}
