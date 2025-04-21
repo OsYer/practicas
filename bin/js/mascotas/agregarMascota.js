@@ -27,32 +27,40 @@ var Nm_Mascotas;
             this.construirFormulario();
         }
         construirFormulario() {
-            this.modal.append("h3").text("Agregar Mascota");
+            this.modal.append("div")
+                .style("display", "flex")
+                .style("justify-content", "space-between")
+                .style("align-items", "center")
+                .append("h3")
+                .text("Agregar Mascota");
+            this.modal.select("div")
+                .append("button")
+                .text("❌")
+                .style("background", "none")
+                .style("border", "none")
+                .style("font-size", "20px")
+                .style("cursor", "pointer")
+                .on("click", () => {
+                this.ocultar();
+                this.resolveGuardado(null);
+            });
             const form = this.modal.append("form").attr("id", "form-agregar");
-            const campoNombre = form.append("div").style("margin-top", "10px");
-            campoNombre.append("label").text("Nombre:");
+            const campoNombre = form.append("label").text("Nombre:");
             const inputNombre = campoNombre.append("input").attr("type", "text");
-            const campoEspecie = form.append("div").style("margin-top", "10px");
-            campoEspecie.append("label").text("Especie:");
+            const campoEspecie = form.append("label").text("Especie:");
             const inputEspecie = campoEspecie.append("input").attr("type", "text");
-            const campoRaza = form.append("div").style("margin-top", "10px");
-            campoRaza.append("label").text("Raza:");
+            const campoRaza = form.append("label").text("Raza:");
             const inputRaza = campoRaza.append("input").attr("type", "text");
-            const campoEdad = form.append("div").style("margin-top", "10px");
-            campoEdad.append("label").text("Edad:");
+            const campoEdad = form.append("label").text("Edad:");
             const inputEdad = campoEdad.append("input").attr("type", "number");
-            const campoPeso = form.append("div").style("margin-top", "10px");
-            campoPeso.append("label").text("Peso:");
+            const campoPeso = form.append("label").text("Peso:");
             const inputPeso = campoPeso.append("input").attr("type", "number").attr("step", "0.01");
-            const campoSexo = form.append("div").style("margin-top", "10px");
-            campoSexo.append("label").text("Sexo:");
+            const campoSexo = form.append("label").text("Sexo:");
             const selectSexo = campoSexo.append("select");
             selectSexo.append("option").attr("value", "hembra").text("Hembra");
             selectSexo.append("option").attr("value", "macho").text("Macho");
-            const campoUsuario = form.append("div").style("margin-top", "10px");
-            campoUsuario.append("label").text("Usuario:");
-            const selectIdUsuario = campoUsuario.append("select");
-            // ✅ Cargar usuarios desde variable global
+            const labelUsuario = form.append("label").text("Usuario:");
+            const selectIdUsuario = labelUsuario.append("select");
             Nm_Mascotas.cargarUsuarios().then(() => {
                 selectIdUsuario.selectAll("option")
                     .data(Nm_Mascotas.UsuariosActivos)
@@ -61,27 +69,37 @@ var Nm_Mascotas;
                     .attr("value", d => d.Id)
                     .text(d => `${d.Nombre} (${d.Correo})`);
             });
-            form.append("div")
+            // Aplicar estilos a labels y campos
+            form.selectAll("label")
+                .style("display", "block")
+                .style("margin-top", "10px")
+                .style("font-weight", "bold");
+            form.selectAll("input, select")
+                .style("width", "100%")
+                .style("padding", "8px")
+                .style("margin-top", "4px")
+                .style("border", "1px solid #ccc")
+                .style("border-radius", "4px")
+                .style("box-sizing", "border-box");
+            const btnGroup = form.append("div")
                 .style("margin-top", "20px")
-                .style("text-align", "right")
-                .call((btns) => {
-                btns.append("button")
-                    .text("Guardar")
-                    .attr("type", "submit")
-                    .style("margin-right", "10px")
-                    .style("padding", "8px 16px")
-                    .style("background-color", "#28a745")
-                    .style("color", "white");
-                btns.append("button")
-                    .text("Cancelar")
-                    .attr("type", "button")
-                    .style("padding", "8px 16px")
-                    .style("background-color", "#dc3545")
-                    .style("color", "white")
-                    .on("click", () => {
-                    this.ocultar();
-                    this.resolveGuardado(null);
-                });
+                .style("text-align", "right");
+            btnGroup.append("button")
+                .text("Guardar")
+                .attr("type", "submit")
+                .style("margin-right", "10px")
+                .style("padding", "8px 16px")
+                .style("background-color", "#28a745")
+                .style("color", "white");
+            btnGroup.append("button")
+                .text("Cancelar")
+                .attr("type", "button")
+                .style("padding", "8px 16px")
+                .style("background-color", "#dc3545")
+                .style("color", "white")
+                .on("click", () => {
+                this.ocultar();
+                this.resolveGuardado(null);
             });
             this.campos = {
                 inputNombre,
@@ -107,7 +125,7 @@ var Nm_Mascotas;
                 };
                 this.resolveGuardado(nuevaMascota);
                 console.log("📦 Enviando a API:", JSON.stringify(nuevaMascota));
-                fetch("http://localhost:63166/ServicioMascotas.svc/AgregarMascota", {
+                fetch(Nm_Mascotas.URL_BASE + "/ServicioMascotas.svc/AgregarMascota", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(nuevaMascota),

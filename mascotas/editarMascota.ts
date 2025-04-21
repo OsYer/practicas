@@ -149,7 +149,7 @@ namespace Nm_Mascotas {
 
         console.log("➡️ Enviando al backend:", JSON.stringify(mascotaEditada));
 
-        fetch("http://localhost:63166/ServicioMascotas.svc/ActualizarMascota", {
+        fetch(Nm_Mascotas.URL_BASE +"/ServicioMascotas.svc/ActualizarMascota", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(mascotaEditada),

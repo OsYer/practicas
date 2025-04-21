@@ -9,11 +9,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 var Nm_Mascotas;
 (function (Nm_Mascotas) {
+    Nm_Mascotas.URL_BASE = "http://192.168.15.225:8090";
     Nm_Mascotas.UsuariosActivos = [];
     function cargarUsuarios() {
         return __awaiter(this, void 0, void 0, function* () {
             if (Nm_Mascotas.UsuariosActivos.length === 0) {
-                const res = yield fetch("http://localhost:63166/ServicioMascotas.svc/ObtenerUsuarios");
+                const res = yield fetch(Nm_Mascotas.URL_BASE + "/ServicioMascotas.svc/ObtenerUsuarios");
                 Nm_Mascotas.UsuariosActivos = yield res.json();
             }
         });
@@ -23,8 +24,8 @@ var Nm_Mascotas;
         constructor() {
             this.mascotas = [];
             this.ultimaFecha = null;
-            this.API_URL = "http://localhost:63166/ServicioMascotas.svc/ObtenerMascotas";
-            this.DELETE_URL = "http://localhost:63166/ServicioMascotas.svc/EliminarMascota/";
+            this.API_URL = Nm_Mascotas.URL_BASE + "/ServicioMascotas.svc/ObtenerMascotas";
+            this.DELETE_URL = Nm_Mascotas.URL_BASE + "/ServicioMascotas.svc/EliminarMascota/";
             this.modalEditar = new Nm_Mascotas.editarMascota();
             this.modalAgregar = new Nm_Mascotas.agregarMascota();
             this.crearEstructuraHTML();

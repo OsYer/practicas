@@ -1,4 +1,7 @@
 namespace Nm_Mascotas {
+    export const URL_BASE = "http://192.168.15.225:8090";
+    // export const URL_BASE = "http://localhost:63166"; 
+    
     export interface Usuario {
         Id: number;
         Nombre: string;
@@ -12,7 +15,7 @@ namespace Nm_Mascotas {
     
       export async function cargarUsuarios(): Promise<void> {
         if (UsuariosActivos.length === 0) {
-          const res = await fetch("http://localhost:63166/ServicioMascotas.svc/ObtenerUsuarios");
+          const res = await fetch(Nm_Mascotas.URL_BASE + "/ServicioMascotas.svc/ObtenerUsuarios");
           UsuariosActivos = await res.json();
         }
       }
@@ -20,11 +23,10 @@ namespace Nm_Mascotas {
     export class TablaMascotas {
         private mascotas: Mascota[] = [];
         private ultimaFecha: string | null = null;
-        private readonly API_URL: string = "http://localhost:63166/ServicioMascotas.svc/ObtenerMascotas";
-        private readonly DELETE_URL: string = "http://localhost:63166/ServicioMascotas.svc/EliminarMascota/";
+        private readonly API_URL: string = Nm_Mascotas.URL_BASE +"/ServicioMascotas.svc/ObtenerMascotas";
+        private readonly DELETE_URL: string = Nm_Mascotas.URL_BASE +"/ServicioMascotas.svc/EliminarMascota/";
         private modalEditar: Nm_Mascotas.editarMascota;
         private modalAgregar: Nm_Mascotas.agregarMascota;
-
         constructor() {
             this.modalEditar = new Nm_Mascotas.editarMascota();
             this.modalAgregar = new Nm_Mascotas.agregarMascota();
@@ -69,7 +71,7 @@ namespace Nm_Mascotas {
             btnGroup
                 .append("button")
                 .text("➕ Agregar nueva mascota")
-                .style("background-color", "#28a745")
+                .style("background-color", "#28a745") 
                 .style("color", "white")
                 .style("border", "none")
                 .style("padding", "5px 10px")
