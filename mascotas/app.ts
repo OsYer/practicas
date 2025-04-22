@@ -27,17 +27,17 @@ namespace Nm_Mascotas {
         private readonly DELETE_URL: string = Nm_Mascotas.URL_BASE +"/ServicioMascotas.svc/EliminarMascota/";
         private modalEditar: Nm_Mascotas.editarMascota;
         private modalAgregar: Nm_Mascotas.agregarMascota;
+        
         constructor() {
             this.modalEditar = new Nm_Mascotas.editarMascota();
             this.modalAgregar = new Nm_Mascotas.agregarMascota();
-
             this.crearEstructuraHTML();
             this.iniciar();
         }
 
         private iniciar(): void {
             this.cargarMascotas();
-            setInterval(() => this.cargarMascotas(), 15000);
+            setInterval(() => this.cargarMascotas(), 8000);
         }
 
         private crearEstructuraHTML(): void {
@@ -132,15 +132,19 @@ namespace Nm_Mascotas {
                 .then((data) => {
                     if (data.Exito && data.Datos.length > 0) {
                         console.log(
-                            ` Se recibieron ${data.Datos.length} mascotas nuevas/editadas.`
+                            ` Se recibieron ${data.Datos.length} mascotas editadas.`
                         );
 
                         const mascotaMap = new Map<number, Mascota>();
                         this.mascotas.forEach((m) => mascotaMap.set(m.Id, m));
 
                         data.Datos.forEach((nueva) => {
-                            mascotaMap.set(nueva.Id, nueva); 
-                        });
+                            if (!nueva.Activo) {
+                                mascotaMap.delete(nueva.Id);
+                            } else {
+                                mascotaMap.set(nueva.Id, nueva);
+                            }
+                        });                        
 
                         this.mascotas = Array.from(mascotaMap.values());
 

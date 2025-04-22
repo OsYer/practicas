@@ -33,7 +33,7 @@ var Nm_Mascotas;
         }
         iniciar() {
             this.cargarMascotas();
-            setInterval(() => this.cargarMascotas(), 15000);
+            setInterval(() => this.cargarMascotas(), 8000);
         }
         crearEstructuraHTML() {
             const container = d3
@@ -113,11 +113,16 @@ var Nm_Mascotas;
                 .then((res) => res.json())
                 .then((data) => {
                 if (data.Exito && data.Datos.length > 0) {
-                    console.log(` Se recibieron ${data.Datos.length} mascotas nuevas/editadas.`);
+                    console.log(` Se recibieron ${data.Datos.length} mascotas editadas.`);
                     const mascotaMap = new Map();
                     this.mascotas.forEach((m) => mascotaMap.set(m.Id, m));
                     data.Datos.forEach((nueva) => {
-                        mascotaMap.set(nueva.Id, nueva);
+                        if (!nueva.Activo) {
+                            mascotaMap.delete(nueva.Id);
+                        }
+                        else {
+                            mascotaMap.set(nueva.Id, nueva);
+                        }
                     });
                     this.mascotas = Array.from(mascotaMap.values());
                     this.actualizarUltimaFecha(data.Datos);
