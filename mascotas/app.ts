@@ -1,7 +1,7 @@
 namespace Nm_Mascotas {
-    export const URL_BASE = "http://192.168.15.225:8090";
-    // export const URL_BASE = "http://localhost:63166"; 
-    
+    // export const URL_BASE = "http://192.168.15.225:8090";
+    export const URL_BASE = "http://localhost:63166";
+
     export interface Usuario {
         Id: number;
         Nombre: string;
@@ -9,25 +9,26 @@ namespace Nm_Mascotas {
         Telefono: string;
         Direccion: string;
         Activo: boolean;
-      }
-    
-      export let UsuariosActivos: Usuario[] = [];
-    
-      export async function cargarUsuarios(): Promise<void> {
+    }
+
+    export let UsuariosActivos: Usuario[] = [];
+
+    export async function cargarUsuarios(): Promise<void> {
         if (UsuariosActivos.length === 0) {
-          const res = await fetch(Nm_Mascotas.URL_BASE + "/ServicioMascotas.svc/ObtenerUsuarios");
-          UsuariosActivos = await res.json();
+            const res = await fetch(Nm_Mascotas.URL_BASE + "/ServicioMascotas.svc/ObtenerUsuarios");
+            UsuariosActivos = await res.json();
         }
-      }
-  
+    }
+
     export class TablaMascotas {
         private mascotas: Mascota[] = [];
         private ultimaFecha: string | null = null;
-        private readonly API_URL: string = Nm_Mascotas.URL_BASE +"/ServicioMascotas.svc/ObtenerMascotas";
-        private readonly DELETE_URL: string = Nm_Mascotas.URL_BASE +"/ServicioMascotas.svc/EliminarMascota/";
+        private readonly API_URL: string = Nm_Mascotas.URL_BASE + "/ServicioMascotas.svc/ObtenerMascotas";
+        private readonly DELETE_URL: string = Nm_Mascotas.URL_BASE + "/ServicioMascotas.svc/EliminarMascota/";
         private modalEditar: Nm_Mascotas.editarMascota;
         private modalAgregar: Nm_Mascotas.agregarMascota;
-        
+        private ordenAscendente: boolean = true;
+
         constructor() {
             this.modalEditar = new Nm_Mascotas.editarMascota();
             this.modalAgregar = new Nm_Mascotas.agregarMascota();
@@ -60,7 +61,7 @@ namespace Nm_Mascotas {
                 .style("justify-content", "space-between")
                 .style("align-items", "center")
                 .style("background-color", "#ffffff")
-                .style("color", "#000") 
+                .style("color", "#000")
                 .style("padding", "10px")
                 .style("border-radius", "5px");
 
@@ -71,13 +72,26 @@ namespace Nm_Mascotas {
             btnGroup
                 .append("button")
                 .text("➕ Agregar nueva mascota")
-                .style("background-color", "#28a745") 
+                .style("background-color", "#28a745")
                 .style("color", "white")
                 .style("border", "none")
                 .style("padding", "5px 10px")
                 .style("border-radius", "4px")
-                .on("click", () => this.agregarMascota()); 
-            
+                .on("click", () => this.agregarMascota());
+
+                btnGroup
+                .append("input")
+                .attr("type", "text")
+                .attr("placeholder", "Buscar por nombre o especie...")
+                .style("margin-right", "10px")
+                .style("padding", "5px")
+                .style("border-radius", "4px")
+                .on("keyup", function(event: KeyboardEvent) {
+                    const input = event.target as HTMLInputElement;
+                    const valor = input.value.toLowerCase();
+                    MascotasRef.filtrarMascotas(valor);
+                });
+                
             const table = card
                 .append("table")
                 .attr("id", "tablaMascotas")
@@ -103,15 +117,37 @@ namespace Nm_Mascotas {
                 "Acciones",
             ];
             headers.forEach((header) => {
-                tr.append("th")
+                const th = tr.append("th")
                     .text(header)
                     .style("padding", "8px")
                     .style("border", "1px solid #dee2e6")
                     .style("text-align", "left");
-            });
 
+                if (header === "Fecha Edición") {
+                    th.style("cursor", "pointer").on("click", () => this.ordenarPorFechaEdicion());
+                }
+            });
             table.append("tbody");
         }
+        private ordenarPorFechaEdicion(): void {
+            this.ordenAscendente = !this.ordenAscendente;
+        
+            this.mascotas.sort((a, b) => {
+                const fechaA = new Date(this.parseWcfDate(a.FechaEdicion)).getTime();
+                const fechaB = new Date(this.parseWcfDate(b.FechaEdicion)).getTime();
+                return this.ordenAscendente ? fechaA - fechaB : fechaB - fechaA;
+            });
+        
+            this.renderTabla();
+        }
+        private filtrarMascotas(valor: string): void {
+    const filtradas = this.mascotas.filter((m) =>
+        m.Nombre.toLowerCase().includes(valor) || 
+        m.Especie.toLowerCase().includes(valor)
+    );
+
+    this.renderTabla(filtradas);
+}
 
         private cargarMascotas(): void {
             const body = {
@@ -137,17 +173,14 @@ namespace Nm_Mascotas {
 
                         const mascotaMap = new Map<number, Mascota>();
                         this.mascotas.forEach((m) => mascotaMap.set(m.Id, m));
-
                         data.Datos.forEach((nueva) => {
                             if (!nueva.Activo) {
                                 mascotaMap.delete(nueva.Id);
                             } else {
                                 mascotaMap.set(nueva.Id, nueva);
                             }
-                        });                        
-
+                        });
                         this.mascotas = Array.from(mascotaMap.values());
-
                         this.actualizarUltimaFecha(data.Datos);
                         this.renderTabla();
                     } else {
@@ -179,7 +212,8 @@ namespace Nm_Mascotas {
             return d.toLocaleString();
         }
 
-        private renderTabla(): void {
+        private renderTabla(datos?: Mascota[]): void {
+            const data = datos || this.mascotas;
             const tbody = d3.select("#tablaMascotas tbody");
             tbody.selectAll("tr").remove();
 
@@ -257,7 +291,7 @@ namespace Nm_Mascotas {
         private agregarMascota(): void {
             this.modalAgregar.mostrar().then((nuevaMascota) => {
                 if (nuevaMascota) {
-                    this.cargarMascotas(); 
+                    this.cargarMascotas();
                 }
             });
         }

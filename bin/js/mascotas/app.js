@@ -9,7 +9,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 var Nm_Mascotas;
 (function (Nm_Mascotas) {
-    Nm_Mascotas.URL_BASE = "http://192.168.15.225:8090";
+    // export const URL_BASE = "http://192.168.15.225:8090";
+    Nm_Mascotas.URL_BASE = "http://localhost:63166";
     Nm_Mascotas.UsuariosActivos = [];
     function cargarUsuarios() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -26,6 +27,7 @@ var Nm_Mascotas;
             this.ultimaFecha = null;
             this.API_URL = Nm_Mascotas.URL_BASE + "/ServicioMascotas.svc/ObtenerMascotas";
             this.DELETE_URL = Nm_Mascotas.URL_BASE + "/ServicioMascotas.svc/EliminarMascota/";
+            this.ordenAscendente = true;
             this.modalEditar = new Nm_Mascotas.editarMascota();
             this.modalAgregar = new Nm_Mascotas.agregarMascota();
             this.crearEstructuraHTML();
@@ -67,6 +69,18 @@ var Nm_Mascotas;
                 .style("padding", "5px 10px")
                 .style("border-radius", "4px")
                 .on("click", () => this.agregarMascota());
+            btnGroup
+                .append("input")
+                .attr("type", "text")
+                .attr("placeholder", "Buscar por nombre o especie...")
+                .style("margin-right", "10px")
+                .style("padding", "5px")
+                .style("border-radius", "4px")
+                .on("keyup", function (event) {
+                const input = event.target;
+                const valor = input.value.toLowerCase();
+                MascotasRef.filtrarMascotas(valor);
+            });
             const table = card
                 .append("table")
                 .attr("id", "tablaMascotas")
@@ -89,13 +103,30 @@ var Nm_Mascotas;
                 "Acciones",
             ];
             headers.forEach((header) => {
-                tr.append("th")
+                const th = tr.append("th")
                     .text(header)
                     .style("padding", "8px")
                     .style("border", "1px solid #dee2e6")
                     .style("text-align", "left");
+                if (header === "Fecha Edición") {
+                    th.style("cursor", "pointer").on("click", () => this.ordenarPorFechaEdicion());
+                }
             });
             table.append("tbody");
+        }
+        ordenarPorFechaEdicion() {
+            this.ordenAscendente = !this.ordenAscendente;
+            this.mascotas.sort((a, b) => {
+                const fechaA = new Date(this.parseWcfDate(a.FechaEdicion)).getTime();
+                const fechaB = new Date(this.parseWcfDate(b.FechaEdicion)).getTime();
+                return this.ordenAscendente ? fechaA - fechaB : fechaB - fechaA;
+            });
+            this.renderTabla();
+        }
+        filtrarMascotas(valor) {
+            const filtradas = this.mascotas.filter((m) => m.Nombre.toLowerCase().includes(valor) ||
+                m.Especie.toLowerCase().includes(valor));
+            this.renderTabla(filtradas);
         }
         cargarMascotas() {
             const body = {
@@ -148,7 +179,8 @@ var Nm_Mascotas;
             const d = new Date(fecha);
             return d.toLocaleString();
         }
-        renderTabla() {
+        renderTabla(datos) {
+            const data = datos || this.mascotas;
             const tbody = d3.select("#tablaMascotas tbody");
             tbody.selectAll("tr").remove();
             const rows = tbody
