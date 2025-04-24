@@ -77,7 +77,6 @@ namespace Nm_Mascotas {
       const labelUsuario = form.append("label").text("Usuario:");
       const selectIdUsuario = labelUsuario.append("select");
 
-      // ✅ Usamos la función global para cargar usuarios solo si no están ya cargados
       Nm_Mascotas.cargarUsuarios().then(() => {
         selectIdUsuario.selectAll("option")
           .data(Nm_Mascotas.UsuariosActivos)
@@ -147,9 +146,9 @@ namespace Nm_Mascotas {
           IdUsuario: parseInt(selectIdUsuario.property("value")),
         };
 
-        console.log("➡️ Enviando al backend:", JSON.stringify(mascotaEditada));
+        console.log(" Enviando al backend:", JSON.stringify(mascotaEditada));
 
-        fetch(Nm_Mascotas.URL_BASE +"/ServicioMascotas.svc/ActualizarMascota", {
+        fetch(Nm_Mascotas.URL_BASE + "/ServicioMascotas.svc/ActualizarMascota", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(mascotaEditada),

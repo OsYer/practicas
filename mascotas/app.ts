@@ -2,24 +2,6 @@ namespace Nm_Mascotas {
     // export const URL_BASE = "http://192.168.15.225:8090";
     export const URL_BASE = "http://localhost:63166";
 
-    export interface Usuario {
-        Id: number;
-        Nombre: string;
-        Correo: string;
-        Telefono: string;
-        Direccion: string;
-        Activo: boolean;
-    }
-
-    export let UsuariosActivos: Usuario[] = [];
-
-    export async function cargarUsuarios(): Promise<void> {
-        if (UsuariosActivos.length === 0) {
-            const res = await fetch(Nm_Mascotas.URL_BASE + "/ServicioMascotas.svc/ObtenerUsuarios");
-            UsuariosActivos = await res.json();
-        }
-    }
-
     export class TablaMascotas {
         private mascotas: Mascota[] = [];
         private ultimaFecha: string | null = null;
@@ -79,19 +61,19 @@ namespace Nm_Mascotas {
                 .style("border-radius", "4px")
                 .on("click", () => this.agregarMascota());
 
-                btnGroup
+            btnGroup
                 .append("input")
                 .attr("type", "text")
                 .attr("placeholder", "Buscar por nombre o especie...")
                 .style("margin-right", "10px")
                 .style("padding", "5px")
                 .style("border-radius", "4px")
-                .on("keyup", function(event: KeyboardEvent) {
+                .on("keyup", function (event: KeyboardEvent) {
                     const input = event.target as HTMLInputElement;
                     const valor = input.value.toLowerCase();
                     MascotasRef.filtrarMascotas(valor);
                 });
-                
+
             const table = card
                 .append("table")
                 .attr("id", "tablaMascotas")
@@ -129,25 +111,27 @@ namespace Nm_Mascotas {
             });
             table.append("tbody");
         }
+        
         private ordenarPorFechaEdicion(): void {
             this.ordenAscendente = !this.ordenAscendente;
-        
+
             this.mascotas.sort((a, b) => {
                 const fechaA = new Date(this.parseWcfDate(a.FechaEdicion)).getTime();
                 const fechaB = new Date(this.parseWcfDate(b.FechaEdicion)).getTime();
                 return this.ordenAscendente ? fechaA - fechaB : fechaB - fechaA;
             });
-        
+
             this.renderTabla();
         }
-        private filtrarMascotas(valor: string): void {
-    const filtradas = this.mascotas.filter((m) =>
-        m.Nombre.toLowerCase().includes(valor) || 
-        m.Especie.toLowerCase().includes(valor)
-    );
 
-    this.renderTabla(filtradas);
-}
+        private filtrarMascotas(valor: string): void {
+            const filtradas = this.mascotas.filter((m) =>
+                m.Nombre.toLowerCase().includes(valor) ||
+                m.Especie.toLowerCase().includes(valor)
+            );
+            // console.log(filtradas);
+            this.renderTabla(filtradas);
+        }
 
         private cargarMascotas(): void {
             const body = {
@@ -173,9 +157,11 @@ namespace Nm_Mascotas {
 
                         const mascotaMap = new Map<number, Mascota>();
                         this.mascotas.forEach((m) => mascotaMap.set(m.Id, m));
+
                         data.Datos.forEach((nueva) => {
                             if (!nueva.Activo) {
                                 mascotaMap.delete(nueva.Id);
+                                console.log("Registro eliminado");
                             } else {
                                 mascotaMap.set(nueva.Id, nueva);
                             }
@@ -218,9 +204,9 @@ namespace Nm_Mascotas {
             tbody.selectAll("tr").remove();
 
             const rows = tbody
-                .selectAll("tr")
-                .data(this.mascotas, (d: any) => d.Id.toString());
-
+            .selectAll("tr")
+            .data(data, (d: Mascota) => d.Id.toString());
+        
             const newRows = rows.enter().append("tr");
 
             newRows.append("td").text((d) => d.Id);

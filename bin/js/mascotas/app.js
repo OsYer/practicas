@@ -1,26 +1,7 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var Nm_Mascotas;
 (function (Nm_Mascotas) {
     // export const URL_BASE = "http://192.168.15.225:8090";
     Nm_Mascotas.URL_BASE = "http://localhost:63166";
-    Nm_Mascotas.UsuariosActivos = [];
-    function cargarUsuarios() {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (Nm_Mascotas.UsuariosActivos.length === 0) {
-                const res = yield fetch(Nm_Mascotas.URL_BASE + "/ServicioMascotas.svc/ObtenerUsuarios");
-                Nm_Mascotas.UsuariosActivos = yield res.json();
-            }
-        });
-    }
-    Nm_Mascotas.cargarUsuarios = cargarUsuarios;
     class TablaMascotas {
         constructor() {
             this.mascotas = [];
@@ -126,6 +107,7 @@ var Nm_Mascotas;
         filtrarMascotas(valor) {
             const filtradas = this.mascotas.filter((m) => m.Nombre.toLowerCase().includes(valor) ||
                 m.Especie.toLowerCase().includes(valor));
+            // console.log(filtradas);
             this.renderTabla(filtradas);
         }
         cargarMascotas() {
@@ -150,6 +132,7 @@ var Nm_Mascotas;
                     data.Datos.forEach((nueva) => {
                         if (!nueva.Activo) {
                             mascotaMap.delete(nueva.Id);
+                            console.log("Registro eliminado");
                         }
                         else {
                             mascotaMap.set(nueva.Id, nueva);
@@ -185,7 +168,7 @@ var Nm_Mascotas;
             tbody.selectAll("tr").remove();
             const rows = tbody
                 .selectAll("tr")
-                .data(this.mascotas, (d) => d.Id.toString());
+                .data(data, (d) => d.Id.toString());
             const newRows = rows.enter().append("tr");
             newRows.append("td").text((d) => d.Id);
             newRows.append("td").text((d) => d.Nombre);

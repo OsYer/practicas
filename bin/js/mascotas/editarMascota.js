@@ -56,7 +56,6 @@ var Nm_Mascotas;
             inputSexo.append("option").attr("value", "macho").text("Macho");
             const labelUsuario = form.append("label").text("Usuario:");
             const selectIdUsuario = labelUsuario.append("select");
-            // ✅ Usamos la función global para cargar usuarios solo si no están ya cargados
             Nm_Mascotas.cargarUsuarios().then(() => {
                 selectIdUsuario.selectAll("option")
                     .data(Nm_Mascotas.UsuariosActivos)
@@ -108,7 +107,7 @@ var Nm_Mascotas;
             form.on("submit", (event) => {
                 event.preventDefault();
                 const mascotaEditada = Object.assign(Object.assign({}, this.mascotaOriginal), { Nombre: inputNombre.property("value"), Especie: inputEspecie.property("value"), Raza: inputRaza.property("value"), Edad: parseInt(inputEdad.property("value")), Peso: parseFloat(inputPeso.property("value")), Sexo: inputSexo.property("value"), IdUsuario: parseInt(selectIdUsuario.property("value")) });
-                console.log("➡️ Enviando al backend:", JSON.stringify(mascotaEditada));
+                console.log(" Enviando al backend:", JSON.stringify(mascotaEditada));
                 fetch(Nm_Mascotas.URL_BASE + "/ServicioMascotas.svc/ActualizarMascota", {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },

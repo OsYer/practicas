@@ -69,7 +69,6 @@ var Nm_Mascotas;
                     .attr("value", d => d.Id)
                     .text(d => `${d.Nombre} (${d.Correo})`);
             });
-            // Aplicar estilos a labels y campos
             form.selectAll("label")
                 .style("display", "block")
                 .style("margin-top", "10px")
@@ -124,7 +123,7 @@ var Nm_Mascotas;
                     IdUsuario: parseInt(this.campos.inputIdUsuario.property("value")),
                 };
                 this.resolveGuardado(nuevaMascota);
-                console.log("📦 Enviando a API:", JSON.stringify(nuevaMascota));
+                console.log(" Enviando a API:", JSON.stringify(nuevaMascota));
                 fetch(Nm_Mascotas.URL_BASE + "/ServicioMascotas.svc/AgregarMascota", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -133,17 +132,17 @@ var Nm_Mascotas;
                     .then((res) => res.json())
                     .then((respuesta) => {
                     if (respuesta.Exito) {
-                        alert("✅ Mascota registrada");
+                        alert(" Mascota registrada");
                         this.resolveGuardado(nuevaMascota);
                     }
                     else {
-                        alert("❌ " + respuesta.Mensaje);
+                        alert("--" + respuesta.Mensaje);
                         this.resolveGuardado(null);
                     }
                     this.ocultar();
                 })
                     .catch((err) => {
-                    console.error("❌ Error en el fetch:", err);
+                    console.error(" Error en el fetch:", err);
                     this.resolveGuardado(null);
                     this.ocultar();
                 });
