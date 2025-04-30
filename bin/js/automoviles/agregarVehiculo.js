@@ -1,7 +1,6 @@
 var Nm_Vehiculos;
 (function (Nm_Vehiculos) {
     class agregarVehiculo {
-        // Función para mostrar el formulario de agregar un vehículo
         mostrar() {
             return new Promise((resolve, reject) => {
                 // Crear el formulario para agregar un vehículo
@@ -30,26 +29,39 @@ var Nm_Vehiculos;
                     .style("margin", "10px 0")
                     .style("width", "100%")
                     .style("padding", "5px");
-                // Campo select para unidad de carga, después de Carga Máxima
+                // Campo select para unidad de carga
                 formDiv.append("label").text("Unidad de Carga: ");
                 const unidadCargaSelect = formDiv.append("select")
                     .style("margin", "10px 0")
                     .style("width", "100%")
                     .style("padding", "5px");
-                // Opciones para el select de unidad de carga
                 unidadCargaSelect.append("option")
                     .attr("value", "kilogramos")
                     .text("Kilogramos");
                 unidadCargaSelect.append("option")
                     .attr("value", "toneladas")
                     .text("Toneladas");
+                // Campo select para tipo de carga
+                formDiv.append("label").text("Tipo de Carga: ");
+                const tipoCargaSelect = formDiv.append("select")
+                    .style("margin", "10px 0")
+                    .style("width", "100%")
+                    .style("padding", "5px");
+                tipoCargaSelect.append("option")
+                    .attr("value", "General")
+                    .text("Carga General");
+                tipoCargaSelect.append("option")
+                    .attr("value", "Peligrosa")
+                    .text("Carga Peligrosa");
+                tipoCargaSelect.append("option")
+                    .attr("value", "Refrigerada")
+                    .text("Productos Refrigerados");
                 // Campo select para estado del vehículo
                 formDiv.append("label").text("Estado: ");
                 const estadoSelect = formDiv.append("select")
                     .style("margin", "10px 0")
                     .style("width", "100%")
                     .style("padding", "5px");
-                // Opciones para el select de estado
                 estadoSelect.append("option")
                     .attr("value", "En Ruta")
                     .text("En Ruta");
@@ -71,8 +83,9 @@ var Nm_Vehiculos;
                     const vehiculo = {
                         Placa: placaInput.node().value,
                         CargaMaxima: parseInt(cargaMaximaInput.node().value),
-                        Estado: estadoSelect.node().value, // Obtener el valor seleccionado del estado
-                        UnidadCarga: unidadCargaSelect.node().value, // Obtener el valor seleccionado de unidad de carga
+                        Estado: estadoSelect.node().value,
+                        UnidadCarga: unidadCargaSelect.node().value,
+                        TipoCarga: tipoCargaSelect.node().value, // Obtener el valor de tipo de carga
                         Activo: true
                     };
                     // Mostrar en consola los datos que se están enviando
@@ -86,7 +99,6 @@ var Nm_Vehiculos;
                         body: JSON.stringify(vehiculo)
                     })
                         .then(response => {
-                        console.log("Respuesta del servidor:", response);
                         if (!response.ok) {
                             throw new Error(`Error HTTP: ${response.status}`);
                         }
@@ -94,7 +106,6 @@ var Nm_Vehiculos;
                     })
                         .then((data) => {
                         console.log("Vehículo agregado:", data);
-                        // Cerrar el modal y devolver el vehículo agregado
                         formDiv.remove();
                         resolve(vehiculo);
                     })
@@ -113,9 +124,7 @@ var Nm_Vehiculos;
                     .style("border-radius", "4px")
                     .style("margin-left", "10px")
                     .on("click", () => {
-                    // Cerrar el formulario sin hacer nada
                     formDiv.remove();
-                    console.log("Operación cancelada");
                 });
             });
         }

@@ -2,7 +2,16 @@ namespace Nm_Vehiculos {
     export class DateUtils {
       private static formatoPantalla = d3.timeFormat('%d/%m/%Y %I:%M %p');
       public static readonly ApiBase = 'http://localhost:50587';
-  
+     
+      public static toWcfDate(date: Date): string {
+        const timestamp = date.getTime(); // milisegundos desde 1970
+        const offsetMin = -date.getTimezoneOffset();
+        const sign = offsetMin >= 0 ? '+' : '-';
+        const hours = Math.floor(Math.abs(offsetMin) / 60).toString().padStart(2, '0');
+        const minutes = (Math.abs(offsetMin) % 60).toString().padStart(2, '0');
+        return `/Date(${timestamp}${sign}${hours}${minutes})/`;
+    }
+    
       /** Devuelve "YYYY-MM-DDThh:mm:ss.SSSuuu±HH:MM" */
       public static formatConMicroOffset(dt: Date): string {
         const pad2 = (n: number) => ('0' + n).slice(-2);

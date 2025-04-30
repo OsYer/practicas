@@ -1,6 +1,14 @@
 var Nm_Vehiculos;
 (function (Nm_Vehiculos) {
     class DateUtils {
+        static toWcfDate(date) {
+            const timestamp = date.getTime(); // milisegundos desde 1970
+            const offsetMin = -date.getTimezoneOffset();
+            const sign = offsetMin >= 0 ? '+' : '-';
+            const hours = Math.floor(Math.abs(offsetMin) / 60).toString().padStart(2, '0');
+            const minutes = (Math.abs(offsetMin) % 60).toString().padStart(2, '0');
+            return `/Date(${timestamp}${sign}${hours}${minutes})/`;
+        }
         /** Devuelve "YYYY-MM-DDThh:mm:ss.SSSuuu±HH:MM" */
         static formatConMicroOffset(dt) {
             const pad2 = (n) => ('0' + n).slice(-2);

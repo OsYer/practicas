@@ -4,7 +4,7 @@ var Nm_Vehiculos;
     class TablaVehiculos {
         constructor() {
             this.vehiculos = [];
-            this.ultimaFecha = null;
+            this.ultimaFecha = null; // Esta será la fecha máxima de edición
             this.API_URL = Nm_Vehiculos.URL_BASE + "/ServicioVehiculos.svc/ObtenerVehiculos";
             this.DELETE_URL = Nm_Vehiculos.URL_BASE + "/ServicioVehiculos.svc/EliminarVehiculo/";
             this.ordenAscendente = true;
@@ -14,8 +14,8 @@ var Nm_Vehiculos;
             this.iniciar();
         }
         iniciar() {
-            this.cargarVehiculos();
-            // setInterval(() => this.cargarVehiculos(), 8000);
+            this.cargarVehiculos(); // Llamada inicial sin fecha
+            setInterval(() => this.cargarVehiculos(), 8000); // Actualización periódica
         }
         crearEstructuraHTML() {
             const container = d3
@@ -73,6 +73,8 @@ var Nm_Vehiculos;
                 "ID",
                 "Placa",
                 "Carga Máxima",
+                "Unidad de Carga",
+                "Tipo de Carga",
                 "Estado",
                 "Fecha Registro",
                 "Fecha Edición",
@@ -84,82 +86,55 @@ var Nm_Vehiculos;
                     .style("padding", "8px")
                     .style("border", "1px solid #dee2e6")
                     .style("text-align", "left");
-                if (header === "Fecha Edición") {
-                    // th.style("cursor", "pointer").on("click", () => this.ordenarPorFechaEdicion());
-                }
             });
             table.append("tbody");
         }
-        // private ordenarPorFechaEdicion(): void {
-        //     this.ordenAscendente = !this.ordenAscendente;
-        //     this.vehiculos.sort((a, b) => {
-        //         const fechaA = new Date(this.parseWcfDate(a.FechaEdicion)).getTime();
-        //         const fechaB = new Date(this.parseWcfDate(b.FechaEdicion)).getTime();
-        //         return this.ordenAscendente ? fechaA - fechaB : fechaB - fechaA;
-        //     });
-        //     this.renderTabla();
-        // }
         filtrarVehiculos(valor) {
             const filtrados = this.vehiculos.filter((v) => v.Placa.toLowerCase().includes(valor) ||
                 v.Estado.toLowerCase().includes(valor));
             this.renderTabla(filtrados);
         }
         cargarVehiculos() {
-            const body = {
-                desde: this.ultimaFecha
-                    ? `/Date(${new Date(this.ultimaFecha).getTime()}-0600)/`
-                    : null,
-            };
-            console.log("Consultando vehículos...");
-            console.log("Enviando filtro:", body.desde);
+            let params = {};
+            // Si ya tenemos una fecha máxima, la pasamos como parámetro en la consulta
+            const tieneUltimaFecha = !!this.ultimaFecha;
+            if (tieneUltimaFecha) {
+                const date = new Date(this.ultimaFecha);
+                params.fechaEdicionMaxima = Nm_Vehiculos.DateUtils.toWcfDate(date);
+            }
+            console.log("Params que se están enviando:", params);
             fetch(this.API_URL, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(body),
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(params),
             })
-                .then((res) => res.json())
+                .then((response) => {
+                console.log("Respuesta de la API:", response);
+                return response.json();
+            })
                 .then((data) => {
-                console.log("Respuesta de la API:", data); // Aquí se loguea la respuesta
-                if (data.Exito && data.Datos.length > 0) {
-                    console.log(`Se recibieron ${data.Datos.length} vehículos editados.`);
-                    const vehiculoMap = new Map();
-                    this.vehiculos.forEach((v) => vehiculoMap.set(v.Id, v));
-                    data.Datos.forEach((nuevo) => {
-                        if (!nuevo.Activo) {
-                            vehiculoMap.delete(nuevo.Id);
-                            console.log("Registro eliminado");
-                        }
-                        else {
-                            vehiculoMap.set(nuevo.Id, nuevo);
-                        }
-                    });
-                    this.vehiculos = Array.from(vehiculoMap.values());
+                console.log("Datos recibidos:", data);
+                if (data.Exito) {
+                    this.vehiculos = data.Datos;
+                    // ✅ Si había una fecha máxima y llegaron vehículos nuevos/actualizados, los mostramos
+                    if (tieneUltimaFecha && this.vehiculos.length > 0) {
+                        console.log("🚀 Vehículos agregados o editados recientemente:");
+                    }
+                    // Actualizamos la fecha máxima
+                    if (this.vehiculos.length > 0) {
+                        this.ultimaFecha = this.vehiculos.reduce((max, vehiculo) => {
+                            return vehiculo.FechaEdicion > max ? vehiculo.FechaEdicion : max;
+                        }, this.ultimaFecha || new Date(0).toISOString());
+                    }
                     this.renderTabla();
                 }
                 else {
-                    console.log("Sin cambios nuevos.");
+                    console.error("No se pudieron cargar los vehículos:", data.Mensaje);
                 }
             })
-                .catch((err) => console.error("Error al consumir la API:", err));
-        }
-        // private actualizarUltimaFecha(nuevos: Vehiculo[]): void {
-        //     // const fechas = nuevos.map((v) =>
-        //     //     // new Date(this.parseWcfDate(v.FechaEdicion)).getTime()
-        //     // );
-        //     const max = Math.max(
-        //         ...fechas,
-        //         new Date(this.ultimaFecha || 0).getTime()
-        //     );
-        //     this.ultimaFecha = new Date(max).toISOString();
-        //     console.log("Nueva fecha máxima actualizada:", this.ultimaFecha);
-        // }
-        parseWcfDate(wcf) {
-            const match = /\/Date\((\d+)(?:-\d+)?\)\//.exec(wcf);
-            return match ? new Date(parseInt(match[1], 10)).toISOString() : wcf; // Devuelve un string en formato ISO
-        }
-        formatDate(fecha) {
-            const d = new Date(fecha); // Convierte la fecha a tipo Date si no es ya un objeto Date
-            return d.toLocaleString(); // Devuelve la fecha en formato local
+                .catch((err) => console.error("Error al cargar vehículos:", err));
         }
         renderTabla(datos) {
             const data = datos || this.vehiculos;
@@ -172,9 +147,11 @@ var Nm_Vehiculos;
             newRows.append("td").text((d) => d.Id);
             newRows.append("td").text((d) => d.Placa);
             newRows.append("td").text((d) => d.CargaMaxima);
+            newRows.append("td").text((d) => d.UnidadCarga); // Mostrar Unidad de Carga
+            newRows.append("td").text((d) => d.TipoCarga); // Mostrar Tipo de Carga
             newRows.append("td").text((d) => d.Estado);
-            newRows.append("td").text((d) => this.formatDate(this.parseWcfDate(d.FechaRegistro))); // Aquí se muestra la fecha de registro
-            newRows.append("td").text((d) => this.formatDate(this.parseWcfDate(d.FechaEdicion))); // Aquí se muestra la fecha de edición
+            newRows.append("td").text((d) => this.formatDate(this.parseWcfDate(d.FechaRegistro).toString())); // Convertir a string
+            newRows.append("td").text((d) => this.formatDate(this.parseWcfDate(d.FechaEdicion).toString())); // Convertir a string
             const actionCells = newRows
                 .append("td")
                 .append("div")
@@ -201,6 +178,14 @@ var Nm_Vehiculos;
                 .style("border-radius", "4px")
                 .on("click", (event, d) => this.eliminarVehiculo(d.Id));
             rows.exit().remove();
+        }
+        parseWcfDate(wcf) {
+            const match = /\/Date\((\d+)(?:-\d+)?\)\//.exec(wcf);
+            return match ? new Date(parseInt(match[1], 10)).toISOString() : wcf; // Devuelve una cadena en formato ISO
+        }
+        formatDate(fecha) {
+            const d = new Date(fecha); // Convierte la fecha a tipo Date si no es ya un objeto Date
+            return d.toLocaleString(); // Devuelve la fecha en formato local
         }
         eliminarVehiculo(id) {
             if (!confirm(`¿Estás seguro de eliminar el vehículo con ID ${id}?`))

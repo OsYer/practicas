@@ -4,9 +4,10 @@ namespace Nm_Vehiculos {
         Placa: string;
         CargaMaxima: number;
         Estado: string;
-        FechaRegistro?: Date;
-        FechaEdicion?: Date;
+        FechaRegistro?: string;
+        FechaEdicion?: string;
         UnidadCarga: string;
+        TipoCarga?:  string;
         Activo: boolean;
     }
 }
