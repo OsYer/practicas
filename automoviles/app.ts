@@ -227,24 +227,30 @@ namespace Nm_Vehiculos {
         }
 
         private eliminarVehiculo(id: number): void {
-            if (!confirm(`¿Estás seguro de eliminar el vehículo con ID ${id}?`))
-                return;
-
-            fetch(this.DELETE_URL + id, {
-                method: "DELETE",
-            })
-                .then((res) => res.json())
-                .then((data) => {
-                    if (data === true) {
-                        console.log(`🗑️ Vehículo con ID ${id} eliminado correctamente.`);
-                        this.vehiculos = this.vehiculos.filter((v) => v.Id !== id);
-                        this.renderTabla();
-                    } else {
-                        console.error("No se pudo eliminar el vehículo.");
-                    }
-                })
-                .catch((err) => console.error("Error al eliminar el vehículo:", err));
+            mostrarConfirmacion(`¿Estás seguro de eliminar el vehículo con ID ${id}?`)
+                .then(confirmado => {
+                    if (!confirmado) return;
+        
+                    fetch(this.DELETE_URL + id, {
+                        method: "DELETE",
+                    })
+                        .then((res) => res.json())
+                        .then((data) => {
+                            if (data === true) {
+                                mostrarNotificacion(`🗑️ Vehículo con ID ${id} eliminado correctamente`, "#dc3545");
+                                this.vehiculos = this.vehiculos.filter((v) => v.Id !== id);
+                                this.renderTabla();
+                            } else {
+                                mostrarNotificacion("❌ No se pudo eliminar el vehículo", "#dc3545");
+                            }
+                        })
+                        .catch((err) => {
+                            console.error("Error al eliminar el vehículo:", err);
+                            mostrarNotificacion("❌ Error al eliminar el vehículo", "#dc3545");
+                        });
+                });
         }
+             
 
         private agregarVehiculo(): void {
             this.modalAgregar.mostrar().then((nuevoVehiculo) => {

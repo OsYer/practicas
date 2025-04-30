@@ -1,5 +1,83 @@
 var Nm_Vehiculos;
 (function (Nm_Vehiculos) {
+    function mostrarConfirmacion(mensaje) {
+        return new Promise((resolve) => {
+            const overlay = d3.select("body").append("div")
+                .style("position", "fixed")
+                .style("top", "0")
+                .style("left", "0")
+                .style("width", "100%")
+                .style("height", "100%")
+                .style("background-color", "rgba(0,0,0,0.3)")
+                .style("z-index", "9998");
+            const modal = d3.select("body").append("div")
+                .style("position", "fixed")
+                .style("top", "50%")
+                .style("left", "50%")
+                .style("transform", "translate(-50%, -50%)")
+                .style("background-color", "#fff")
+                .style("padding", "20px")
+                .style("border-radius", "8px")
+                .style("box-shadow", "0 4px 8px rgba(0, 0, 0, 0.2)")
+                .style("z-index", "9999");
+            modal.append("p")
+                .text(mensaje)
+                .style("margin-bottom", "20px");
+            const buttonContainer = modal.append("div")
+                .style("display", "flex")
+                .style("justify-content", "center")
+                .style("gap", "10px");
+            buttonContainer.append("button")
+                .text("Cancelar")
+                .style("padding", "8px 20px")
+                .style("background-color", "#6c757d")
+                .style("color", "white")
+                .style("border", "none")
+                .style("border-radius", "4px")
+                .on("click", () => {
+                overlay.remove();
+                modal.remove();
+                resolve(false);
+            });
+            buttonContainer.append("button")
+                .text("Eliminar")
+                .style("padding", "8px 20px")
+                .style("background-color", "#dc3545")
+                .style("color", "white")
+                .style("border", "none")
+                .style("border-radius", "4px")
+                .on("click", () => {
+                overlay.remove();
+                modal.remove();
+                resolve(true);
+            });
+        });
+    }
+    Nm_Vehiculos.mostrarConfirmacion = mostrarConfirmacion;
+    function mostrarNotificacion(mensaje, color = "#28a745") {
+        const noti = d3.select("body")
+            .append("div")
+            .text(mensaje)
+            .style("position", "fixed")
+            .style("top", "20px")
+            .style("right", "20px")
+            .style("background-color", color)
+            .style("color", "white")
+            .style("padding", "10px 20px")
+            .style("border-radius", "6px")
+            .style("box-shadow", "0 2px 6px rgba(0,0,0,0.2)")
+            .style("z-index", "10000")
+            .style("opacity", "0")
+            .transition()
+            .duration(200)
+            .style("opacity", "1")
+            .transition()
+            .delay(2000)
+            .duration(500)
+            .style("opacity", "0")
+            .remove();
+    }
+    Nm_Vehiculos.mostrarNotificacion = mostrarNotificacion;
     class DateUtils {
         static toWcfDate(date) {
             const timestamp = date.getTime(); // milisegundos desde 1970

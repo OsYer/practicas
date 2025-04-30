@@ -121,9 +121,10 @@ namespace Nm_Vehiculos {
                             return response.json();
                         })
                         .then((data) => {
-                            console.log("Vehículo agregado:", data);
+                            mostrarNotificacion("✅ Vehículo agregado correctamente");
                             formDiv.remove();
                             resolve(vehiculo);
+
                         })
                         .catch((error) => {
                             console.error("Error al agregar vehículo:", error);

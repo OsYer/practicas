@@ -105,7 +105,7 @@ var Nm_Vehiculos;
                         return response.json();
                     })
                         .then((data) => {
-                        console.log("Vehículo agregado:", data);
+                        Nm_Vehiculos.mostrarNotificacion("✅ Vehículo agregado correctamente");
                         formDiv.remove();
                         resolve(vehiculo);
                     })

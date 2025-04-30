@@ -188,23 +188,29 @@ var Nm_Vehiculos;
             return d.toLocaleString(); // Devuelve la fecha en formato local
         }
         eliminarVehiculo(id) {
-            if (!confirm(`¿Estás seguro de eliminar el vehículo con ID ${id}?`))
-                return;
-            fetch(this.DELETE_URL + id, {
-                method: "DELETE",
-            })
-                .then((res) => res.json())
-                .then((data) => {
-                if (data === true) {
-                    console.log(`🗑️ Vehículo con ID ${id} eliminado correctamente.`);
-                    this.vehiculos = this.vehiculos.filter((v) => v.Id !== id);
-                    this.renderTabla();
-                }
-                else {
-                    console.error("No se pudo eliminar el vehículo.");
-                }
-            })
-                .catch((err) => console.error("Error al eliminar el vehículo:", err));
+            Nm_Vehiculos.mostrarConfirmacion(`¿Estás seguro de eliminar el vehículo con ID ${id}?`)
+                .then(confirmado => {
+                if (!confirmado)
+                    return;
+                fetch(this.DELETE_URL + id, {
+                    method: "DELETE",
+                })
+                    .then((res) => res.json())
+                    .then((data) => {
+                    if (data === true) {
+                        Nm_Vehiculos.mostrarNotificacion(`🗑️ Vehículo con ID ${id} eliminado correctamente`, "#dc3545");
+                        this.vehiculos = this.vehiculos.filter((v) => v.Id !== id);
+                        this.renderTabla();
+                    }
+                    else {
+                        Nm_Vehiculos.mostrarNotificacion("❌ No se pudo eliminar el vehículo", "#dc3545");
+                    }
+                })
+                    .catch((err) => {
+                    console.error("Error al eliminar el vehículo:", err);
+                    Nm_Vehiculos.mostrarNotificacion("❌ Error al eliminar el vehículo", "#dc3545");
+                });
+            });
         }
         agregarVehiculo() {
             this.modalAgregar.mostrar().then((nuevoVehiculo) => {
